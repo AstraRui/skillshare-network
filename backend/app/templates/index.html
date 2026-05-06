@@ -43,7 +43,7 @@
               @click="
                 (async () => {
                   if (!window.__ws) {
-                    window.__ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/chat');
+                    window.__ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/api/v1/chat/ws');
                     window.__ws.onmessage = (e) => log.push(e.data);
                   }
                   window.__ws.send(msg);

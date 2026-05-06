@@ -12,8 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 
-COPY pyproject.toml ./
-RUN uv sync --frozen --no-dev || uv sync --no-dev
+# Копируем lock-файл для воспроизводимой сборки
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
 
 COPY app ./app
 COPY alembic ./alembic

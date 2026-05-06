@@ -1,38 +1,42 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.router import router as api_router
 from app.core.settings import settings
+from app.db.session import engine
 from app.web.templates import templates
 
 BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    # startup
+    yield
+    # shutdown — закрываем пул соединений с БД
+    await engine.dispose()
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title=settings.app_name)
+    app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
     app.include_router(api_router, prefix="/api")
 
-    app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+    # Монтируем /static только если папка существует
+    if STATIC_DIR.exists():
+        app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
-        return templates.TemplateResponse("index.html", {"request": request})
-
-    @app.websocket("/ws/chat")
-    async def ws_chat(websocket: WebSocket) -> None:
-        await websocket.accept()
-        try:
-            while True:
-                msg = await websocket.receive_text()
-                await websocket.send_text(f"echo: {msg}")
-        except WebSocketDisconnect:
-            return
+        return templates.TemplateResponse(request, "index.html")
 
     return app
 

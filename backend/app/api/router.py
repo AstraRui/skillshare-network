@@ -1,10 +1,12 @@
+"""
+Корневой API роутер.
+Подключает версионированные роутеры (/api/v1/...).
+"""
 from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.api.v1.router import router as v1_router
+
 router = APIRouter()
-
-
-@router.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+router.include_router(v1_router)
