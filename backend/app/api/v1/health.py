@@ -1,4 +1,5 @@
 """Health-check эндпоинт — проверяет БД и Redis."""
+
 from __future__ import annotations
 
 from typing import Annotated

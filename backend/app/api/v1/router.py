@@ -1,4 +1,5 @@
 """Агрегирует все v1 роутеры в один."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter
