@@ -23,5 +23,5 @@ COPY gunicorn_conf.py ./gunicorn_conf.py
 
 EXPOSE 8000
 
-CMD ["gunicorn", "-c", "gunicorn_conf.py", "app.main:app"]
+CMD [".venv/bin/gunicorn", "-c", "gunicorn_conf.py", "app.main:app"]
 
