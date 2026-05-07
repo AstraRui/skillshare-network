@@ -1,13 +1,505 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillShare AI - Fixed Infrastructure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Используем базовую библиотеку Lucide для стабильности -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            color: #e2e8f0;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 10px; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { 
+            background: rgba(99,102,241,0.2); 
+        }
+
+        .animate-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
+        .node-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // Универсальный компонент для иконок, решающий проблему undefined
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const iconRef = useRef(null);
+
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name]);
+
+            // Приводим название к формату lucide (kebab-case)
+            const lucideName = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+
+            return (
+                <i 
+                    data-lucide={lucideName} 
+                    className={className}
+                    style={{ width: size, height: size, display: 'inline-block' }}
+                ></i>
+            );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [hoveredNode, setHoveredNode] = useState(null);
+            const [selectedChat, setSelectedChat] = useState(1);
+
+            const userProfile = {
+                name: 'Алексей Иванов',
+                title: 'Senior UI/UX & Product Designer',
+                reputation: 4.92,
+                completedSwaps: 24,
+                skills: ['UI/UX Design', 'Figma', 'React Basics', 'Prototyping'],
+                needs: ['Python Development', 'Legal Audit', 'SEO Marketing'],
+                trustFactors: {
+                    identity: true,
+                    experience: 98,
+                    speed: 4.5
+                }
+            };
+
+            const matches = [
+                { id: 'm1', name: 'Мария К.', skill: 'Python Dev', type: 'incoming', reason: 'Нужен дизайн CRM', gives: 'Backend на Python', x: 200, y: 100 },
+                { id: 'm2', name: 'Игорь С.', skill: 'Legal Tech', type: 'incoming', reason: 'Редизайн лендинга', gives: 'Юр. аудит', x: 550, y: 120 },
+                { id: 'm3', name: 'Анна В.', skill: 'SMM Strategy', type: 'outgoing', reason: 'Вам нужен рост', gives: 'Маркетинг план', x: 620, y: 300 },
+                { id: 'm4', name: 'TechNode', skill: 'DevOps', type: 'predictive', reason: 'Масштабирование', gives: 'Cloud Setup', x: 450, y: 420 },
+                { id: 'm5', name: 'Дмитрий', skill: 'Copywriter', type: 'outgoing', reason: 'Контент для портфолио', gives: 'Тексты', x: 180, y: 350 },
+            ];
+
+            const Navigation = () => (
+                <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+                    <div className="max-w-7xl mx-auto backdrop-blur-xl bg-slate-900/80 border border-white/10 rounded-2xl px-6 py-3 flex justify-between items-center shadow-2xl">
+                        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+                            <div className="bg-gradient-to-br from-indigo-500 to-fuchsia-500 p-2 rounded-xl">
+                                <Icon name="zap" className="text-white fill-white" size={20} />
+                            </div>
+                            <span className="font-black text-xl tracking-tighter text-white uppercase">
+                                Skill<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-fuchsia-400">Share</span>
+                            </span>
+                        </div>
+
+                        <div className="hidden md:flex items-center space-x-6">
+                            {[
+                                { id: 'dashboard', label: 'Обзор', icon: 'BarChart3' },
+                                { id: 'matching', label: 'Matching', icon: 'Sparkles' },
+                                { id: 'messages', label: 'Сообщения', icon: 'MessageSquare' },
+                                { id: 'profile', label: 'Профиль', icon: 'User' },
+                            ].map((item) => (
+                                <button 
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)}
+                                    className={`flex items-center space-x-2 text-[11px] font-black uppercase tracking-widest transition-all px-3 py-2 rounded-lg ${
+                                        activeTab === item.id 
+                                        ? 'bg-indigo-500/10 text-indigo-400 shadow-[inset_0_0_10px_rgba(99,102,241,0.2)]' 
+                                        : 'text-slate-400 hover:text-white'
+                                    }`}
+                                >
+                                    <Icon name={item.icon} size={14} />
+                                    <span>{item.label}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex items-center space-x-4">
+                            <button onClick={() => setActiveTab('profile')} className="flex items-center space-x-3 bg-white/5 border border-white/10 p-1.5 rounded-xl hover:bg-white/10 transition">
+                                <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-[10px] text-white">АИ</div>
+                                <div className="hidden lg:block text-left pr-2">
+                                    <p className="text-[10px] font-black text-white leading-none">4.92 ★</p>
+                                    <p className="text-[8px] text-slate-500 uppercase tracking-tighter">Reputation</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            );
+
+            const MatchingVisualizer = () => {
+                const centerX = 400;
+                const centerY = 250;
+                return (
+                    <div className="space-y-8 animate-in duration-700">
+                        <div className="flex justify-between items-center text-left">
+                            <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">AI CORE <span className="text-indigo-500">VISUALIZER</span></h2>
+                            <span className="px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-[10px] font-bold uppercase">LIVE: 1,421 NODES</span>
+                        </div>
+                        <div className="relative bg-slate-950 rounded-[40px] border border-white/5 shadow-2xl overflow-hidden min-h-[550px] flex items-center justify-center group">
+                            <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] bg-[size:30px_30px]"></div>
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                                {matches.map((m) => (
+                                <g key={m.id}>
+                                    <line x1={centerX} y1={centerY} x2={m.x} y2={m.y} stroke={m.type === 'predictive' ? '#d946ef' : '#6366f1'} strokeWidth={hoveredNode === m.id ? "3" : "1"} className={`transition-all duration-500 ${hoveredNode === m.id ? 'opacity-100' : 'opacity-20'}`} />
+                                    <circle r="3" fill={m.type === 'incoming' ? '#6366f1' : '#d946ef'}>
+                                        <animateMotion dur="3s" repeatCount="indefinite" path={`M ${m.type === 'incoming' ? m.x : centerX} ${m.type === 'incoming' ? m.y : centerY} L ${m.type === 'incoming' ? centerX : m.x} ${m.type === 'incoming' ? centerY : m.y}`} />
+                                    </circle>
+                                </g>
+                                ))}
+                            </svg>
+                            <div className="relative z-20 w-32 h-32 flex items-center justify-center">
+                                <div className="absolute inset-0 bg-indigo-600 rounded-full blur-3xl opacity-20 animate-pulse"></div>
+                                <div className="w-24 h-24 bg-slate-900 border-2 border-indigo-500 rounded-3xl flex flex-col items-center justify-center shadow-2xl shadow-indigo-500/20">
+                                    <Icon name="user" className="text-indigo-400 mb-1" size={24} />
+                                    <span className="text-[10px] font-black text-white uppercase tracking-tighter">CORE USER</span>
+                                </div>
+                            </div>
+                            {matches.map((m) => (
+                                <div key={m.id} style={{ position: 'absolute', left: m.x - 30, top: m.y - 30 }} onMouseEnter={() => setHoveredNode(m.id)} onMouseLeave={() => setHoveredNode(null)} className={`z-30 cursor-pointer transition-all duration-500 ${hoveredNode === m.id ? 'scale-125' : 'scale-100'}`}>
+                                    <div className={`w-16 h-16 rounded-2xl border flex items-center justify-center shadow-lg ${hoveredNode === m.id ? 'bg-indigo-600 border-white shadow-indigo-500/40' : 'bg-slate-900 border-white/10'}`}>
+                                        {m.type === 'predictive' ? <Icon name="trending-up" size={24} className={hoveredNode === m.id ? 'text-white' : 'text-fuchsia-400'} /> : <Icon name="user" size={24} className={hoveredNode === m.id ? 'text-white' : 'text-slate-400'} />}
+                                    </div>
+                                </div>
+                            ))}
+                            <div className={`absolute bottom-8 px-6 py-4 backdrop-blur-xl bg-slate-900/90 border border-white/10 rounded-2xl shadow-2xl transition-all duration-500 ${hoveredNode ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                                {hoveredNode && (
+                                    <div className="flex items-center space-x-6 text-left">
+                                        <div>
+                                            <p className="text-indigo-400 text-[10px] font-black uppercase tracking-widest">{matches.find(m => m.id === hoveredNode).skill}</p>
+                                            <p className="text-white font-bold">{matches.find(m => m.id === hoveredNode).name}</p>
+                                        </div>
+                                        <div className="h-8 w-px bg-white/10"></div>
+                                        <div>
+                                            <p className="text-slate-500 text-[10px] uppercase font-bold">Отношение</p>
+                                            <p className="text-white text-xs">{matches.find(m => m.id === hoveredNode).reason}</p>
+                                        </div>
+                                        <button onClick={() => setActiveTab('messages')} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-500 transition">Открыть чат</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const Messenger = () => (
+                <div className="bg-slate-950/50 backdrop-blur-md border border-white/5 rounded-[40px] h-[700px] flex overflow-hidden animate-in duration-500">
+                    <div className="w-80 border-r border-white/5 flex flex-col bg-slate-900/30">
+                        <div className="p-6 text-left">
+                            <h2 className="text-xl font-black text-white italic mb-4">MESSAGES</h2>
+                            <div className="relative">
+                                <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+                                <input type="text" placeholder="Поиск сделок..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none" />
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto space-y-1 px-3 custom-scrollbar">
+                            {[
+                                { id: 1, name: 'Мария К. (Dev)', last: 'Когда созвонимся по API?', active: true, time: '12:45' },
+                                { id: 2, name: 'Игорь С. (Legal)', last: 'Договор во вложении', active: false, time: 'Вчера' },
+                                { id: 3, name: 'Анна В. (SMM)', last: 'Презентация готова', active: false, time: '02.05' },
+                            ].map(chat => (
+                                <div key={chat.id} onClick={() => setSelectedChat(chat.id)} className={`p-4 rounded-2xl cursor-pointer transition-all flex items-center space-x-3 text-left ${selectedChat === chat.id ? 'bg-indigo-600/10 border border-indigo-500/20' : 'hover:bg-white/5 border border-transparent'}`}>
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs ${selectedChat === chat.id ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                        {chat.name.charAt(0)}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between">
+                                            <p className={`text-xs font-bold truncate ${selectedChat === chat.id ? 'text-white' : 'text-slate-300'}`}>{chat.name}</p>
+                                            <span className="text-[8px] text-slate-500">{chat.time}</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 truncate mt-1 font-medium">{chat.last}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex-1 flex flex-col bg-slate-900/10">
+                        <div className="p-6 border-b border-white/5 flex justify-between items-center">
+                            <div className="flex items-center space-x-4 text-left">
+                                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-lg">M</div>
+                                <div>
+                                    <h3 className="text-white font-bold text-sm">Мария Кузнецова</h3>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Swap: Python API</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <button className="p-2 text-slate-400 hover:text-white transition"><Icon name="search" size={18} /></button>
+                                <button className="p-2 text-slate-400 hover:text-white transition"><Icon name="more-vertical" size={18} /></button>
+                                <button className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ml-4 shadow-lg shadow-indigo-500/20">Завершить сделку</button>
+                            </div>
+                        </div>
+                        <div className="flex-1 p-6 space-y-6 overflow-y-auto custom-scrollbar bg-[radial-gradient(ellipse_at_center,#6366f105,transparent)]">
+                            <div className="max-w-[60%] bg-white/5 border border-white/5 p-4 rounded-3xl rounded-tl-none text-sm text-slate-200 leading-relaxed shadow-xl text-left">
+                                Привет! Я закончила базовую логику на Python. Нам нужно обсудить фронтенд часть, чтобы я знала какие эндпоинты тебе нужны в первую очередь.
+                                <p className="text-[9px] text-slate-500 mt-2 font-mono">12:30</p>
+                            </div>
+                            <div className="max-w-[60%] bg-indigo-600 p-4 rounded-3xl rounded-tr-none ml-auto text-sm text-white leading-relaxed shadow-2xl text-left shadow-indigo-500/20">
+                                Супер! Мне важно сначала получить эндпоинты для авторизации и профиля. Дизайн я уже залил в Фигму, можешь посмотреть?
+                                <p className="text-[9px] text-indigo-300 mt-2 font-mono text-right">12:34 • Прочитано</p>
+                            </div>
+                            <div className="flex justify-center">
+                                <span className="px-4 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-bold text-slate-500 uppercase tracking-widest">Среда, 06 Мая</span>
+                            </div>
+                            <div className="max-w-[60%] bg-white/5 border border-white/5 p-4 rounded-3xl rounded-tl-none text-sm text-slate-200 leading-relaxed text-left">
+                                Да, посмотрела. Дизайн огонь! Давай завтра в 11:00 созвонимся.
+                                <p className="text-[9px] text-slate-500 mt-2 font-mono">12:45</p>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-white/5 bg-slate-900/50">
+                            <div className="bg-white/5 border border-white/10 rounded-[24px] p-2 flex items-center space-x-2">
+                                <button className="p-2 text-slate-500 hover:text-indigo-400 transition"><Icon name="paperclip" size={18} /></button>
+                                <input type="text" placeholder="Введите сообщение..." className="flex-1 bg-transparent border-none text-sm text-white focus:ring-0 outline-none px-2" />
+                                <button className="p-2 text-slate-500 hover:text-indigo-400 transition"><Icon name="smile" size={18} /></button>
+                                <button className="bg-indigo-600 text-white p-3 rounded-2xl hover:bg-indigo-500 transition shadow-lg shadow-indigo-500/20">
+                                    <Icon name="send" size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const ProfileSettings = () => (
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-in duration-500">
+                    <div className="lg:col-span-1 space-y-6">
+                        <div className="bg-slate-900 border border-white/5 p-8 rounded-[40px] text-center relative overflow-hidden group">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-fuchsia-500"></div>
+                            <div className="w-24 h-24 bg-indigo-600 mx-auto rounded-[32px] flex items-center justify-center text-3xl font-black text-white shadow-2xl rotate-3 group-hover:rotate-0 transition-transform mb-6">АИ</div>
+                            <h3 className="text-xl font-black text-white italic">{userProfile.name}</h3>
+                            <p className="text-slate-500 text-xs mt-1 font-bold uppercase tracking-widest">Moscow, Russia</p>
+                            <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+                                <div className="flex justify-between items-center font-bold">
+                                    <span className="text-[10px] text-slate-400 uppercase">Репутация</span>
+                                    <span className="text-indigo-400">4.92 ★</span>
+                                </div>
+                                <div className="flex justify-between items-center font-bold">
+                                    <span className="text-[10px] text-slate-400 uppercase">Сделок</span>
+                                    <span className="text-white">24</span>
+                                </div>
+                                <div className="flex justify-between items-center font-bold">
+                                    <span className="text-[10px] text-slate-400 uppercase">Уровень</span>
+                                    <span className="text-fuchsia-400 uppercase tracking-tighter">PRO</span>
+                                </div>
+                            </div>
+                            <button className="w-full mt-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white transition">Редактировать</button>
+                        </div>
+                        <div className="bg-slate-900 border border-white/5 p-6 rounded-[32px] space-y-2">
+                            <button className="w-full flex items-center space-x-3 p-3 rounded-xl bg-indigo-600/10 text-indigo-400 border border-indigo-500/20">
+                                <Icon name="settings" size={16} /> <span className="text-xs font-bold">Настройки аккаунта</span>
+                            </button>
+                            <button className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-white/5 text-slate-400 transition">
+                                <Icon name="shield-check" size={16} /> <span className="text-xs font-bold">Безопасность</span>
+                            </button>
+                            <button className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-white/5 text-slate-400 transition">
+                                <Icon name="bell" size={16} /> <span className="text-xs font-bold">Уведомления</span>
+                            </button>
+                            <button className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-red-500/10 text-red-500 transition mt-4">
+                                <Icon name="log-out" size={16} /> <span className="text-xs font-bold">Выйти</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div className="lg:col-span-3 space-y-8">
+                        <div className="bg-slate-900 border border-white/5 p-8 rounded-[40px] text-left">
+                            <div className="flex justify-between items-center mb-8">
+                                <div>
+                                    <h3 className="text-2xl font-black text-white italic uppercase leading-none">Skill Configuration</h3>
+                                    <p className="text-slate-500 text-xs mt-2 font-medium">Обновите навыки, чтобы алгоритм предложил лучшие цепочки.</p>
+                                </div>
+                                <button className="p-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-400 transition"><Icon name="plus-circle" size={20} /></button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Я предлагаю</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {userProfile.skills.map(s => (
+                                            <span key={s} className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-white font-bold flex items-center space-x-2">
+                                                <span>{s}</span>
+                                                <Icon name="x" size={12} className="cursor-pointer text-slate-500 hover:text-white" />
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-fuchsia-400 uppercase tracking-[0.2em]">Я ищу (Needs)</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {userProfile.needs.map(n => (
+                                            <span key={n} className="px-4 py-2 bg-fuchsia-500/10 border border-fuchsia-500/20 rounded-xl text-xs text-white font-bold flex items-center space-x-2">
+                                                <span>{n}</span>
+                                                <Icon name="x" size={12} className="cursor-pointer text-slate-500 hover:text-white" />
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                            <div className="bg-slate-900 border border-white/5 p-8 rounded-[40px]">
+                                <h3 className="text-lg font-black text-white italic uppercase mb-6">Trust Factors</h3>
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="p-2 bg-green-500/10 rounded-lg text-green-400"><Icon name="check-circle-2" size={16} /></div>
+                                            <span className="text-sm font-bold text-slate-300">Identity Verified</span>
+                                        </div>
+                                        <span className="text-[10px] font-black text-green-500">CONFIRMED</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400"><Icon name="award" size={16} /></div>
+                                            <span className="text-sm font-bold text-slate-300">Expertise Score</span>
+                                        </div>
+                                        <span className="text-[10px] font-black text-white">98 / 100</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400"><Icon name="zap" size={16} /></div>
+                                            <span className="text-sm font-bold text-slate-300">Response Speed</span>
+                                        </div>
+                                        <span className="text-[10px] font-black text-white">4.5h AVG</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-gradient-to-br from-indigo-900/40 to-fuchsia-900/40 border border-white/10 p-8 rounded-[40px] flex flex-col justify-between">
+                                <div>
+                                    <h3 className="text-xl font-black text-white italic uppercase leading-tight mb-4 text-left">Infrastructure <br/> API Access</h3>
+                                    <p className="text-slate-400 text-xs font-medium text-left">Используйте ваш токен для интеграции SkillShare во внешние сервисы.</p>
+                                </div>
+                                <div className="mt-6 flex items-center space-x-2 bg-black/40 p-3 rounded-2xl border border-white/5">
+                                    <code className="text-[10px] text-indigo-300 font-mono truncate">sk_live_51M...889xx</code>
+                                    <button className="p-1 text-slate-500 hover:text-white transition"><Icon name="share-2" size={14} /></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const Dashboard = () => (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-10 animate-in">
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="relative group overflow-hidden rounded-[40px] bg-slate-900 border border-white/5 p-10 text-white shadow-2xl text-left">
+                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                            <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                                <div className="text-center md:text-left">
+                                    <span className="text-indigo-400 text-xs font-bold uppercase tracking-widest px-3 py-1 bg-indigo-500/10 rounded-full">Pro Member</span>
+                                    <h1 className="text-5xl font-black mt-4 mb-4 tracking-tighter leading-none italic uppercase">Network <br/> Efficiency <span className="text-indigo-400">+40%</span></h1>
+                                    <p className="text-slate-400 max-w-sm font-medium">Алгоритм пересчитал цепочки. Найдено 3 новых элитных совпадения.</p>
+                                </div>
+                                <div className="shrink-0 p-8 bg-slate-800 border border-white/10 rounded-[32px] shadow-2xl rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                                    <div className="text-4xl font-black text-indigo-400">{userProfile.reputation}</div>
+                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Trust Score</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                            <div className="bg-slate-900/50 backdrop-blur-md border border-white/5 p-8 rounded-[32px]">
+                                <h3 className="text-lg font-bold text-white mb-6 uppercase italic">Active Swaps</h3>
+                                <div className="space-y-4">
+                                    {[
+                                        { title: 'Python API', partner: 'Мария К.', progress: 85 },
+                                        { title: 'Legal Audit', partner: 'Игорь С.', progress: 40 },
+                                    ].map((swap, i) => (
+                                        <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5 group hover:border-indigo-500/30 transition">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div>
+                                                    <p className="text-white font-bold text-sm">{swap.title}</p>
+                                                    <p className="text-[10px] text-slate-500">{swap.partner}</p>
+                                                </div>
+                                                <div className="text-[10px] font-mono text-indigo-400">{swap.progress}%</div>
+                                            </div>
+                                            <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                                                <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${swap.progress}%` }}></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="bg-gradient-to-br from-indigo-600 to-fuchsia-600 p-8 rounded-[32px] flex flex-col justify-between shadow-2xl shadow-indigo-500/20">
+                                <h3 className="text-lg font-bold text-white italic uppercase">Matching <br/> Pulse</h3>
+                                <p className="text-white/80 text-sm font-medium">Спрос на ваш навык UI/UX вырос на 15% в секторе LegalTech. Пора обновиться!</p>
+                                <button onClick={() => setActiveTab('matching')} className="mt-4 w-full py-3 bg-white text-indigo-900 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform active:scale-95 shadow-xl">Запустить Граф</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-6 text-left">
+                        <div className="bg-slate-900 border border-white/5 p-8 rounded-[40px] h-full shadow-2xl">
+                            <h3 className="text-white font-black italic uppercase mb-6 tracking-widest text-sm">System Logs</h3>
+                            <div className="space-y-6 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                                {[
+                                    { text: 'Мария К. начала разработку API', time: '12:45', type: 'msg' },
+                                    { text: 'Алгоритм обновил 5 связей', time: '11:20', type: 'system' },
+                                    { text: 'Верификация пройдена успешно', time: 'Вчера', type: 'security' },
+                                    { text: 'Новая цепочка: Вы -> Мария -> Игорь', time: '02.05', type: 'match' },
+                                ].map((n, i) => (
+                                    <div key={i} className="flex items-start space-x-3 group cursor-pointer border-l-2 border-transparent hover:border-indigo-500 pl-3 transition-all">
+                                        <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${n.type === 'msg' ? 'bg-indigo-500' : n.type === 'match' ? 'bg-fuchsia-500' : 'bg-slate-500'}`}></div>
+                                        <div className="flex-1">
+                                            <p className="text-xs text-slate-300 group-hover:text-white transition-colors leading-relaxed">{n.text}</p>
+                                            <span className="text-[9px] font-mono text-slate-600 uppercase mt-1 block">{n.time}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <button className="w-full mt-8 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/5 transition">Архив логов</button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen text-slate-200 selection:bg-indigo-500/30 overflow-x-hidden">
+                    <div className="fixed -top-40 -left-40 w-[600px] h-[600px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+                    <div className="fixed -bottom-40 -right-40 w-[600px] h-[600px] bg-fuchsia-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+                    <Navigation />
+                    
+                    <main className="max-w-7xl mx-auto px-6 pt-32 pb-20">
+                        {activeTab === 'dashboard' && <Dashboard />}
+                        {activeTab === 'matching' && <MatchingVisualizer />}
+                        {activeTab === 'messages' && <Messenger />}
+                        {activeTab === 'profile' && <ProfileSettings />}
+                        {activeTab === 'explore' && (
+                            <div className="py-40 text-center animate-in">
+                                <Icon name="search" size={64} className="mx-auto text-slate-800 mb-6" />
+                                <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Global Skill <span className="text-indigo-500">Aggregator</span></h2>
+                                <p className="text-slate-500 mt-2">Поиск по 1.4M навыков в реальном времени...</p>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
 </html>
