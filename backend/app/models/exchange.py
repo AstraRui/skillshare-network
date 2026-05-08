@@ -43,6 +43,7 @@ class Exchange(Base):
     participants = relationship(
         "ExchangeParticipant", back_populates="exchange", cascade="all, delete-orphan"
     )
+    chat = relationship("Chat", back_populates="exchange", uselist=False)
     tasks = relationship("Task", back_populates="exchange", cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="exchange", cascade="all, delete-orphan")
 

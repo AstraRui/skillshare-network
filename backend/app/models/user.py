@@ -43,5 +43,8 @@ class User(Base):
     exchange_participants = relationship(
         "ExchangeParticipant", back_populates="user", cascade="all, delete-orphan"
     )
+    chat_participants = relationship(
+        "ChatParticipant", back_populates="user", cascade="all, delete-orphan"
+    )
     assigned_tasks = relationship("Task", back_populates="assignee")
     messages = relationship("Message", back_populates="sender")

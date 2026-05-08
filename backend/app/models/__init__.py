@@ -1,3 +1,4 @@
+from app.models.chat import Chat, ChatParticipant
 from app.models.exchange import Exchange, ExchangeParticipant
 from app.models.message import Message
 from app.models.review import Review
@@ -14,6 +15,8 @@ __all__ = [
     "UserSkillsWanted",
     "Exchange",
     "ExchangeParticipant",
+    "Chat",
+    "ChatParticipant",
     "Review",
     "Task",
     "Message",
