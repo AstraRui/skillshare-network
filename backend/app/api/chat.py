@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from sqlalchemy.orm import Session, selectinload
@@ -13,6 +13,8 @@ from app.models.message import Message
 from app.schemas.chat import ChatCreate, ChatRead, MessageCreate, MessageRead, MessageUpdate
 
 router = APIRouter(tags=["chats"])
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 
 class ChatConnectionManager:
@@ -77,8 +79,8 @@ def _ensure_participant(db: Session, chat_id: int, user_id: int) -> None:
 
 @router.get("/chats", response_model=list[ChatRead])
 def get_chats(
+    db: DbSession,
     user_id: int | None = Query(default=None),
-    db: Session = Depends(get_db),
 ) -> list[ChatRead]:
     query = (
         db.query(Chat)
@@ -94,12 +96,12 @@ def get_chats(
 
 
 @router.get("/chats/{chat_id}", response_model=ChatRead)
-def get_chat(chat_id: int, db: Session = Depends(get_db)) -> ChatRead:
+def get_chat(chat_id: int, db: DbSession) -> ChatRead:
     return _chat_to_read(_get_chat_or_404(db, chat_id))
 
 
 @router.post("/chats", response_model=ChatRead, status_code=status.HTTP_201_CREATED)
-def create_chat(payload: ChatCreate, db: Session = Depends(get_db)) -> ChatRead:
+def create_chat(payload: ChatCreate, db: DbSession) -> ChatRead:
     participant_ids = set(payload.participant_ids)
     participant_ids.add(payload.created_by_id)
 
@@ -129,8 +131,8 @@ def create_chat(payload: ChatCreate, db: Session = Depends(get_db)) -> ChatRead:
 @router.delete("/chats/{chat_id}", status_code=status.HTTP_200_OK)
 def delete_chat(
     chat_id: int,
+    db: DbSession,
     user_id: int | None = Query(default=None),
-    db: Session = Depends(get_db),
 ) -> dict[str, str]:
     chat = _get_chat_or_404(db, chat_id)
 
@@ -147,8 +149,8 @@ def delete_chat(
 @router.get("/chats/{chat_id}/messages", response_model=list[MessageRead])
 def get_chat_messages(
     chat_id: int,
+    db: DbSession,
     user_id: int | None = Query(default=None),
-    db: Session = Depends(get_db),
 ) -> list[MessageRead]:
     _get_chat_or_404(db, chat_id)
 
@@ -167,7 +169,7 @@ def get_chat_messages(
 async def create_message(
     chat_id: int,
     payload: MessageCreate,
-    db: Session = Depends(get_db),
+    db: DbSession,
 ) -> MessageRead:
     _get_chat_or_404(db, chat_id)
     _ensure_participant(db, chat_id, payload.sender_id)
@@ -199,8 +201,8 @@ async def create_message(
 async def update_message(
     message_id: int,
     payload: MessageUpdate,
+    db: DbSession,
     user_id: int | None = Query(default=None),
-    db: Session = Depends(get_db),
 ) -> MessageRead:
     message = db.query(Message).filter(Message.id == message_id, Message.is_deleted.is_(False)).first()
 
@@ -235,8 +237,8 @@ async def update_message(
 @router.delete("/messages/{message_id}", status_code=status.HTTP_200_OK)
 async def delete_message(
     message_id: int,
+    db: DbSession,
     user_id: int | None = Query(default=None),
-    db: Session = Depends(get_db),
 ) -> dict[str, str | int]:
     message = db.query(Message).filter(Message.id == message_id, Message.is_deleted.is_(False)).first()
 
