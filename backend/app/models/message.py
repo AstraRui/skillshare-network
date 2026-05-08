@@ -10,13 +10,19 @@ class Message(Base):
     __tablename__ = "messages"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    task_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False, index=True)
-    sender_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
+    task_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    sender_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
     content: Mapped[str | None] = mapped_column(Text)
     media_url: Mapped[str | None] = mapped_column(Text)
     media_type: Mapped[str | None] = mapped_column(Text)
     media_size: Mapped[int | None] = mapped_column(Integer)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     task = relationship("Task", back_populates="messages")
