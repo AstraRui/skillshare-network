@@ -1,11 +1,20 @@
+# Общие файлы
 .DS_Store
 .env
+*.log
 
+# Python / Backend
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
-
 backend/.venv/
+venv/
+ENV/
 
-*.log
+# React / Frontend
+node_modules/
+dist/
+build/
+.eslintcache
+frontend/node_modules/
