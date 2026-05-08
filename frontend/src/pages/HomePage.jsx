@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import NetworkGraph from '../components/network/NetworkGraph.jsx'
+import './HomePage.css'
 
 const stats = [
   { value: '1 200+', label: 'активных специалистов' },
@@ -26,13 +28,16 @@ function HomePage() {
         </div>
       </div>
 
-      <div className="stat-grid" aria-label="Ключевые метрики платформы">
-        {stats.map((item) => (
-          <article key={item.label} className="stat-card">
-            <p className="stat-value">{item.value}</p>
-            <p className="muted">{item.label}</p>
-          </article>
-        ))}
+      <div className="hero-side">
+        <NetworkGraph />
+        <div className="stat-grid" aria-label="Ключевые метрики платформы">
+          {stats.map((item) => (
+            <article key={item.label} className="stat-card">
+              <p className="stat-value">{item.value}</p>
+              <p className="muted">{item.label}</p>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   )
