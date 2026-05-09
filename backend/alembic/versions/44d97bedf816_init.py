@@ -1,11 +1,3 @@
-"""init
-
-Revision ID: 44d97bedf816
-Revises: 
-Create Date: 2026-05-07 13:24:51.258523
-
-"""
-
 from __future__ import annotations
 
 from alembic import op
