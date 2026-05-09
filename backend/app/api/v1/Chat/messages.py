@@ -35,7 +35,9 @@ async def get_chat_messages(
     return result.scalars().all()
 
 
-@router.post("/chats/{chat_id}/messages", response_model=MessageRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/chats/{chat_id}/messages", response_model=MessageRead, status_code=status.HTTP_201_CREATED
+)
 async def create_message(
     chat_id: int,
     payload: MessageCreate,
@@ -82,7 +84,9 @@ async def update_message(
     if message is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
     if message.sender_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only sender can edit message")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only sender can edit message"
+        )
 
     update_data = payload.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -118,12 +122,16 @@ async def delete_message(
     if message is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
     if message.sender_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only sender can delete message")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only sender can delete message"
+        )
 
     message.is_deleted = True
     await db.commit()
 
     if message.chat_id is not None:
-        await manager.broadcast(chat_id=message.chat_id, payload={"event": "message_deleted", "message_id": message.id})
+        await manager.broadcast(
+            chat_id=message.chat_id, payload={"event": "message_deleted", "message_id": message.id}
+        )
 
     return {"status": "deleted", "message_id": message.id}

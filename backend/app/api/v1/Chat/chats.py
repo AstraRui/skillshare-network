@@ -22,7 +22,12 @@ async def get_chats(
     db: DB,
     user_id: int | None = Query(default=None),
 ) -> list[ChatRead]:
-    query = select(Chat).options(selectinload(Chat.participants)).where(Chat.is_deleted.is_(False)).order_by(Chat.created_at.desc())
+    query = (
+        select(Chat)
+        .options(selectinload(Chat.participants))
+        .where(Chat.is_deleted.is_(False))
+        .order_by(Chat.created_at.desc())
+    )
 
     if user_id is not None:
         query = query.join(ChatParticipant).where(ChatParticipant.user_id == user_id)
@@ -40,7 +45,9 @@ async def get_chat(chat_id: int, db: DB) -> ChatRead:
 @router.post("/chats", response_model=ChatRead, status_code=status.HTTP_201_CREATED)
 async def create_chat(payload: ChatCreate, db: DB) -> ChatRead:
     result = await db.execute(
-        select(Exchange).options(selectinload(Exchange.participants)).where(
+        select(Exchange)
+        .options(selectinload(Exchange.participants))
+        .where(
             Exchange.id == payload.exchange_id,
             Exchange.is_deleted.is_(False),
         )

@@ -11,11 +11,7 @@ class Message(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     chat_id: Mapped[int] = mapped_column(
-        BigInteger, 
-        ForeignKey("chats.id", 
-        ondelete="CASCADE"), 
-        nullable=False, 
-        index=True
+        BigInteger, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False, index=True
     )
     sender_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True

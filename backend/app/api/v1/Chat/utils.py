@@ -21,7 +21,9 @@ def _chat_to_read(chat: Chat) -> ChatRead:
 
 async def _get_chat_or_404(db: AsyncSession, chat_id: int) -> Chat:
     result = await db.execute(
-        select(Chat).options(selectinload(Chat.participants)).where(
+        select(Chat)
+        .options(selectinload(Chat.participants))
+        .where(
             Chat.id == chat_id,
             Chat.is_deleted.is_(False),
         )
