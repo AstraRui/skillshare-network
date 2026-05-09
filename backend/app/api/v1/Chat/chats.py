@@ -11,7 +11,6 @@ from app.models.chat import Chat, ChatParticipant
 from app.models.exchange import Exchange
 from app.schemas.chat import ChatCreate, ChatRead
 
-from .connection_manager import manager
 from .utils import _chat_to_read, _ensure_participant, _get_chat_or_404
 
 router = APIRouter(prefix="/chat", tags=["chat"])
