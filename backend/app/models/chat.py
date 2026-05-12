@@ -11,13 +11,17 @@ class ChatStatus(enum.StrEnum):
     active = "active"
     closed = "closed"
 
+
 class Chat(Base):
     __tablename__ = "chats"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     exchange_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("exchanges.id", ondelete="CASCADE"),
-        nullable=False, unique=True, index=True
+        BigInteger,
+        ForeignKey("exchanges.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

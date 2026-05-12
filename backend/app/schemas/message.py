@@ -7,6 +7,7 @@ class MessageCreate(BaseModel):
     content: str | None = None
     media_url: str | None = None
 
+
 class MessageRead(BaseModel):
     model_config = {"from_attributes": True}
 
@@ -18,6 +19,7 @@ class MessageRead(BaseModel):
     created_at: datetime
     edited_at: datetime | None
     is_deleted: bool
+
 
 class MessageUpdate(BaseModel):
     content: str

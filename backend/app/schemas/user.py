@@ -15,9 +15,11 @@ class UserRegister(BaseModel):
             raise ValueError("Пароль должен содержать минимум 10 символов")
         return v
 
+
 class UserLogin(BaseModel):
     email: str
     password: str
+
 
 class UserResponse(BaseModel):
     id: int
@@ -27,8 +29,9 @@ class UserResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class TokenResponse(BaseModel):
     access_token: str
-    #Bearer — это тип токена в стандарте OAuth2. 
-    #Означает "предъявитель" — кто предъявил токен, тот и авторизован.
-    token_type: str = "bearer" 
+    # Bearer — это тип токена в стандарте OAuth2.
+    # Означает "предъявитель" — кто предъявил токен, тот и авторизован.
+    token_type: str = "bearer"

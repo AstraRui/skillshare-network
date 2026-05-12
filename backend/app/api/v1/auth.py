@@ -12,10 +12,12 @@ from app.services.auth import login_user, register_user
 router = APIRouter(prefix="/auth", tags=["Auth"])
 DB = Annotated[AsyncSession, Depends(get_db_session)]
 
+
 @router.post("/register", response_model=UserResponse)
 async def register(data: UserRegister, db: DB) -> UserResponse:
     user = await register_user(db, data)
     return user
+
 
 @router.post("/login", response_model=TokenResponse)
 async def login(data: UserLogin, db: DB) -> TokenResponse:
