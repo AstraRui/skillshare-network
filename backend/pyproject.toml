@@ -1,15 +1,13 @@
 [project]
 name = "skillshare-network-backend"
 version = "0.1.0"
-description = "SkillShare Network backend (FastAPI + Jinja2/HTMX + Postgres + Redis)"
-readme = "../README.md"
+description = "SkillShare Network API (FastAPI + Postgres + Redis)"
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
   "gunicorn>=22.0",
-  "jinja2>=3.1",
-  "python-multipart>=0.0.9",
   "pydantic>=2.8",
   "pydantic-settings>=2.4",
   "sqlalchemy[asyncio]>=2.0",
@@ -22,6 +20,7 @@ dependencies = [
   "pytest>=9.0.3",
   "pytest-asyncio>=1.3.0",
   "httpx>=0.28.1",
+  "python-multipart>=0.0.9",
 ]
 
 [dependency-groups]
@@ -52,4 +51,3 @@ testpaths = ["tests"]
 
 [tool.uv]
 package = false
-

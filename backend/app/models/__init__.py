@@ -1,4 +1,5 @@
-from app.models.exchange import Exchange, ExchangeParticipant
+from app.models.listing import Listing, ListingInterest, ListingInterestStatus, ListingStatus
+from app.models.exchange import Exchange, ExchangeParticipant, ExchangeStatus
 from app.models.message import Message
 from app.models.review import Review
 from app.models.skill import Skill, SkillCategory, UserSkillsOffered, UserSkillsWanted
@@ -13,8 +14,13 @@ __all__ = [
     "Skill",
     "UserSkillsOffered",
     "UserSkillsWanted",
+    "Listing",
+    "ListingInterest",
+    "ListingStatus",
+    "ListingInterestStatus",
     "Exchange",
     "ExchangeParticipant",
+    "ExchangeStatus",
     "Review",
     "Task",
     "Message",

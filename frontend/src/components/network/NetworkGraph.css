@@ -1,0 +1,128 @@
+.network-card {
+  position: relative;
+  min-height: 320px;
+  border-radius: var(--radius);
+  border: 1px solid #1c2242;
+  background:
+    radial-gradient(circle at 55% 52%, rgba(79, 70, 229, 0.22), rgba(2, 6, 23, 0) 42%),
+    #03071a;
+  overflow: hidden;
+}
+
+.network-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(122, 135, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(122, 135, 255, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.35;
+}
+
+.network-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.network-line {
+  stroke: #3f4d93;
+  stroke-width: 0.45;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+
+.network-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #1b264a;
+  background: #0a132f;
+  display: grid;
+  place-items: center;
+  color: #8f9cff;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.network-node--trend {
+  color: #d26aff;
+  border-color: #37245e;
+}
+
+.network-user-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.network-trend-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.network-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  width: 136px;
+  height: 136px;
+  display: grid;
+  place-items: center;
+}
+
+.network-center__glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(76, 105, 255, 0.45), rgba(76, 105, 255, 0));
+}
+
+.network-center__ring {
+  position: absolute;
+  width: 98px;
+  height: 98px;
+  border-radius: 18px;
+  border: 2px solid rgba(110, 122, 255, 0.85);
+  box-shadow: 0 0 20px rgba(84, 99, 255, 0.35);
+}
+
+.network-center__node {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 14px;
+  border: 1px solid #273c80;
+  background: #0b1432;
+  color: #d9e0ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 14px 28px rgba(10, 16, 41, 0.75);
+}
+
+.network-user-icon--center {
+  width: 17px;
+  height: 17px;
+}
+
+.network-center__label {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #c6d2ff;
+}
+
+@media (max-width: 900px) {
+  .network-card {
+    min-height: 280px;
+  }
+}

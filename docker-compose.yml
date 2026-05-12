@@ -35,12 +35,26 @@ services:
       SSN_REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend:/app  # Чтобы код обновлялся без пересборки контейнера
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Важно: не перезаписывать модули внутри контейнера локальными
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Помогает hot-reload работать внутри Docker
+    depends_on:
+      - backend
+
 volumes:
   pg_data:
-

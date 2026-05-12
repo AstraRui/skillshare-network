@@ -1,4 +1,9 @@
-# Python
+# Общие файлы
+.DS_Store
+.env
+*.log
+
+# Python / Backend
 __pycache__/
 *.py[cod]
 *.pyo
@@ -66,3 +71,11 @@ logs/
 
 # Docker
 docker-compose.override.yml
+backend/.venv/
+
+# React / Frontend
+node_modules/
+dist/
+build/
+.eslintcache
+frontend/node_modules/

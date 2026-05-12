@@ -1,6 +1,10 @@
+"""Сообщения: либо чат сделки (exchange_id), либо тред задачи внутри сделки (task_id)."""
+
+from __future__ import annotations
+
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -8,6 +12,13 @@ from app.db.base import Base
 
 class Message(Base):
     __tablename__ = "messages"
+    __table_args__ = (
+        CheckConstraint(
+            "(task_id IS NOT NULL AND exchange_id IS NULL) OR "
+            "(task_id IS NULL AND exchange_id IS NOT NULL)",
+            name="ck_message_task_xor_exchange",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     chat_id: Mapped[int] = mapped_column(
@@ -27,4 +38,6 @@ class Message(Base):
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     chat = relationship("Chat", back_populates="messages")
+    exchange = relationship("Exchange", back_populates="messages")
+    task = relationship("Task", back_populates="messages")
     sender = relationship("User", back_populates="messages")
