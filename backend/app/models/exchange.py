@@ -9,7 +9,6 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     SmallInteger,
-    String,
     UniqueConstraint,
     func,
 )

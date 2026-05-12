@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -241,7 +241,7 @@ async def confirm_exchange_completion(
 
     if exchange.completed_by_initiator and exchange.completed_by_partner:
         exchange.status = ExchangeStatus.completed
-        exchange.completed_at = datetime.now(timezone.utc)
+        exchange.completed_at = datetime.now(UTC)
 
     await db.flush()
     await db.refresh(exchange)
