@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-from typing import Annotated
-
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.params import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Annotated
 
 from app.crud import chat as chat_crud
 from app.crud import message as message_crud
 from app.db.session import get_db_session
-from app.models import Message
+from app.models import Chat, Message
 from app.schemas.chat import ChatRead
-from app.schemas.message import MessageRead, MessageUpdate
+from app.schemas.message import MessageRead, MessageCreate, MessageUpdate
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 DB = Annotated[AsyncSession, Depends(get_db_session)]
