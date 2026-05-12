@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Chat, ChatStatus, chat
+from app.models import Chat, ChatStatus
 
 
 async def create_chat(db: AsyncSession, exchange_id: int) -> Chat:

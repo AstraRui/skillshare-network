@@ -1,15 +1,17 @@
 from __future__ import annotations
+
 from datetime import datetime, timedelta
 
 import bcrypt
 import jwt
-from sqlalchemy import select
-from app.core.settings import settings
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.settings import settings
 from app.models.user import User
 from app.schemas.user import UserLogin, UserRegister
+
 
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
