@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -141,7 +141,9 @@ async def accept_listing_interest(
     if existing is not None:
         raise HTTPException(status_code=409, detail="Active exchange already exists for listing")
 
-    all_interests = list(await db.scalars(select(ListingInterest).where(ListingInterest.listing_id == listing_id)))
+    all_interests = list(
+        await db.scalars(select(ListingInterest).where(ListingInterest.listing_id == listing_id))
+    )
     for item in all_interests:
         item.status = (
             ListingInterestStatus.accepted
@@ -241,7 +243,7 @@ async def confirm_exchange_completion(
 
     if exchange.completed_by_initiator and exchange.completed_by_partner:
         exchange.status = ExchangeStatus.completed
-        exchange.completed_at = datetime.now(timezone.utc)
+        exchange.completed_at = datetime.now(UTC)
 
     await db.flush()
     await db.refresh(exchange)
@@ -268,7 +270,9 @@ async def get_exchange_messages(
     )
 
 
-@router.post("/{exchange_id}/messages", response_model=MessageOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{exchange_id}/messages", response_model=MessageOut, status_code=status.HTTP_201_CREATED
+)
 async def post_exchange_message(
     exchange_id: int,
     payload: MessageCreate,
@@ -296,7 +300,9 @@ async def post_exchange_message(
     return message
 
 
-@router.post("/{exchange_id}/reviews", response_model=ReviewOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{exchange_id}/reviews", response_model=ReviewOut, status_code=status.HTTP_201_CREATED
+)
 async def create_exchange_review(
     exchange_id: int,
     payload: ReviewCreate,
@@ -309,7 +315,9 @@ async def create_exchange_review(
     await _require_exchange_member(db, exchange, current_user.id)
 
     if exchange.status != ExchangeStatus.completed:
-        raise HTTPException(status_code=400, detail="Reviews are available only for completed exchanges")
+        raise HTTPException(
+            status_code=400, detail="Reviews are available only for completed exchanges"
+        )
     if payload.rating < 1 or payload.rating > 5:
         raise HTTPException(status_code=400, detail="Rating must be in range 1..5")
 

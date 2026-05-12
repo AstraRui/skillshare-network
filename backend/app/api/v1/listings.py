@@ -57,7 +57,9 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post("", response_model=ListingOut, status_code=status.HTTP_201_CREATED)
-async def create_listing(payload: ListingCreate, db: DbSession, current_user: CurrentUser) -> Listing:
+async def create_listing(
+    payload: ListingCreate, db: DbSession, current_user: CurrentUser
+) -> Listing:
     listing = Listing(
         author_id=current_user.id,
         title=payload.title.strip(),
@@ -87,7 +89,11 @@ async def get_listings(
     return list(await db.scalars(stmt))
 
 
-@router.post("/{listing_id}/interests", response_model=ListingInterestOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{listing_id}/interests",
+    response_model=ListingInterestOut,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_listing_interest(
     listing_id: int,
     payload: ListingInterestCreate,

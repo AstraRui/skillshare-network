@@ -1,5 +1,6 @@
-from app.models.listing import Listing, ListingInterest, ListingInterestStatus, ListingStatus
+from app.models.chat import Chat, ChatStatus
 from app.models.exchange import Exchange, ExchangeParticipant, ExchangeStatus
+from app.models.listing import Listing, ListingInterest, ListingInterestStatus, ListingStatus
 from app.models.message import Message
 from app.models.review import Review
 from app.models.skill import Skill, SkillCategory, UserSkillsOffered, UserSkillsWanted
@@ -23,4 +24,6 @@ __all__ = [
     "Review",
     "Task",
     "Message",
+    "Chat",
+    "ChatStatus",
 ]

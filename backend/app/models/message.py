@@ -4,7 +4,16 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Text,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -21,11 +30,8 @@ class Message(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    exchange_id: Mapped[int | None] = mapped_column(
-        BigInteger, ForeignKey("exchanges.id", ondelete="CASCADE"), nullable=True, index=True
-    )
-    task_id: Mapped[int | None] = mapped_column(
-        BigInteger, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True, index=True
+    chat_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False, index=True
     )
     sender_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True
@@ -37,8 +43,10 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
+    chat = relationship("Chat", back_populates="messages")
     exchange = relationship("Exchange", back_populates="messages")
     task = relationship("Task", back_populates="messages")
     sender = relationship("User", back_populates="messages")
