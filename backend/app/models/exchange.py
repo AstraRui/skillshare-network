@@ -35,7 +35,6 @@ class Exchange(Base):
     moderated_by: Mapped[int | None] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
-
     initiator = relationship(
         "User", foreign_keys=[initiator_id], back_populates="initiated_exchanges"
     )
@@ -45,6 +44,7 @@ class Exchange(Base):
     )
     tasks = relationship("Task", back_populates="exchange", cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="exchange", cascade="all, delete-orphan")
+    chat = relationship("Chat", back_populates="exchange", uselist=False, cascade="all, delete-orphan")
 
 
 class ExchangeParticipant(Base):
@@ -65,7 +65,7 @@ class ExchangeParticipant(Base):
     )
     position: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
 
-    exchange = relationship("Exchange", back_populates="participants")
+    exchange = relationship("Exchange", foreign_keys=[exchange_id], back_populates="participants")
     user = relationship("User", back_populates="exchange_participants")
     gives_skill = relationship("Skill", foreign_keys=[gives_skill_id])
     gets_skill = relationship("Skill", foreign_keys=[gets_skill_id])

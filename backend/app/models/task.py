@@ -19,4 +19,3 @@ class Task(Base):
 
     exchange = relationship("Exchange", back_populates="tasks")
     assignee = relationship("User", back_populates="assigned_tasks")
-    messages = relationship("Message", back_populates="task", cascade="all, delete-orphan")

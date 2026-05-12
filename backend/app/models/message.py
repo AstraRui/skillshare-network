@@ -10,8 +10,8 @@ class Message(Base):
     __tablename__ = "messages"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    task_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False, index=True
+    chat_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False, index=True
     )
     sender_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True
@@ -23,7 +23,8 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    task = relationship("Task", back_populates="messages")
+    chat = relationship("Chat", back_populates="messages")
     sender = relationship("User", back_populates="messages")
