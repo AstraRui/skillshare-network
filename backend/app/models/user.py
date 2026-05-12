@@ -45,3 +45,5 @@ class User(Base):
     )
     assigned_tasks = relationship("Task", back_populates="assignee")
     messages = relationship("Message", back_populates="sender")
+    listings = relationship("Listing", back_populates="author")
+    listing_interests = relationship("ListingInterest", back_populates="responder")

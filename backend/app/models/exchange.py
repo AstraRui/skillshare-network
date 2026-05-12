@@ -1,9 +1,11 @@
+import enum
 from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
     Boolean,
     DateTime,
+    Enum,
     ForeignKey,
     Integer,
     SmallInteger,
@@ -16,6 +18,15 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
+class ExchangeStatus(enum.StrEnum):
+    """Жизненный цикл сделки (ТЗ): обсуждение → активный обмен → завершение / отмена."""
+
+    discussion = "discussion"
+    active = "active"
+    completed = "completed"
+    cancelled = "cancelled"
+
+
 class Exchange(Base):
     __tablename__ = "exchanges"
 
@@ -23,12 +34,21 @@ class Exchange(Base):
     initiator_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True
     )
-    status: Mapped[str] = mapped_column(String, nullable=False, default="created")
+    listing_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("listings.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    status: Mapped[ExchangeStatus] = mapped_column(
+        Enum(ExchangeStatus, name="exchange_status_enum", native_enum=False, length=32),
+        nullable=False,
+        default=ExchangeStatus.discussion,
+    )
     is_chain: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_by_initiator: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    completed_by_partner: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_moderated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -36,6 +56,7 @@ class Exchange(Base):
         BigInteger, ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
 
+    listing = relationship("Listing", back_populates="exchanges")
     initiator = relationship(
         "User", foreign_keys=[initiator_id], back_populates="initiated_exchanges"
     )
@@ -45,6 +66,7 @@ class Exchange(Base):
     )
     tasks = relationship("Task", back_populates="exchange", cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="exchange", cascade="all, delete-orphan")
+    messages = relationship("Message", back_populates="exchange", cascade="all, delete-orphan")
 
 
 class ExchangeParticipant(Base):
