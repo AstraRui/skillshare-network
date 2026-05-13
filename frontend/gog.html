@@ -1,0 +1,78 @@
+<!-- SECTION: MARKETPLACE (EXPLORE) -->
+<div x-show="activeTab === 'explore'" x-transition class="space-y-8">
+    
+    <!-- Заголовок и Поиск -->
+    <div class="flex flex-col md:flex-row justify-between items-end gap-6">
+        <div>
+            <h2 class="text-4xl font-black text-white italic uppercase tracking-tighter">
+                Global <span class="text-indigo-500">Market</span>
+            </h2>
+            <p class="text-slate-500 text-sm mt-2">Каталог открытых предложений в сети.</p>
+        </div>
+        
+        <div class="relative w-full md:w-64">
+            <input 
+                type="text" 
+                placeholder="Поиск навыка..." 
+                class="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-indigo-500 transition-colors"
+                hx-get="/api/search" 
+                hx-trigger="keyup changed delay:500ms" 
+                hx-target="#offers-grid"
+            >
+        </div>
+    </div>
+
+    <!-- Сетка предложений -->
+    <div id="offers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <template x-for="offer in marketplaceOffers" :key="offer.id">
+            <div 
+                @click="openModal(offer)" 
+                class="group bg-slate-900/40 border border-white/5 p-6 rounded-[32px] hover:bg-slate-800/60 hover:border-indigo-500/40 hover:-translate-y-2 hover:shadow-[0_15px_40px_-10px_rgba(99,102,241,0.3)] transition-all duration-300 cursor-pointer relative overflow-hidden"
+            >
+                <!-- Слой декоративного градиента -->
+                <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <!-- Тип предложения (Менторство / Услуга) -->
+                <template x-if="offer.type === 'mentorship'">
+                    <div class="absolute top-0 right-0 px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white text-[8px] font-black uppercase tracking-widest rounded-bl-2xl shadow-lg z-10">
+                        Менторство
+                    </div>
+                </template>
+
+                <!-- Шапка карточки -->
+                <div class="flex items-center space-x-3 mb-6 relative z-10">
+                    <div class="w-10 h-10 bg-slate-800 border border-white/10 rounded-xl flex items-center justify-center text-indigo-400 font-bold shadow-inner" x-text="offer.user.charAt(0)"></div>
+                    <div>
+                        <h4 class="text-white font-bold text-sm" x-text="offer.user"></h4>
+                        <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest" x-text="offer.role"></p>
+                    </div>
+                </div>
+
+                <!-- Контент сделки (Бартер) -->
+                <div class="space-y-4 relative z-10">
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase font-black mb-1">Предлагает:</p>
+                        <p class="text-white font-bold text-sm" x-text="offer.offer"></p>
+                    </div>
+                    
+                    <div class="h-px w-full bg-gradient-to-r from-transparent via-slate-700 to-transparent my-2"></div>
+                    
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase font-black mb-1">Ищет:</p>
+                        <p class="text-fuchsia-400 font-bold text-sm" x-text="offer.seeking"></p>
+                    </div>
+                </div>
+
+                <!-- Теги -->
+                <div class="mt-6 pt-6 border-t border-white/5 flex flex-wrap gap-2 relative z-10">
+                    <template x-for="tag in offer.tags">
+                        <span 
+                            class="text-[9px] font-mono font-bold px-2.5 py-1 bg-black/40 border border-white/5 rounded-md text-slate-400 group-hover:text-indigo-300 group-hover:border-indigo-500/30 transition-colors" 
+                            x-text="'#' + tag"
+                        ></span>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
