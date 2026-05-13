@@ -11,6 +11,8 @@ from fastapi.staticfiles import StaticFiles
 from app.api.router import router as api_router
 from app.core.settings import settings
 from app.db.session import engine
+from app.logging.logging_config import setup_logging
+from app.logging.logging_middleware import logging_middleware
 from app.web.templates import templates
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -20,13 +22,21 @@ STATIC_DIR = BASE_DIR / "static"
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # startup
+    setup_logging()
+
     yield
+
     # shutdown — закрываем пул соединений с БД
     await engine.dispose()
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title=settings.app_name, lifespan=lifespan)
+    app = FastAPI(
+        title=settings.app_name,
+        lifespan=lifespan,
+    )
+
+    app.middleware("http")(logging_middleware)
 
     app.include_router(api_router, prefix="/api")
 
