@@ -3,6 +3,11 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Chat, ChatStatus, Exchange, ExchangeStatus, Message
+from app.seed.test_data.generators import (
+    generate_cancelled_message,
+    generate_chat_messages,
+    generate_completed_message,
+)
 
 
 async def create_chats_and_messages(
@@ -27,36 +32,19 @@ async def create_chats_and_messages(
         session.add(chat)
         await session.flush()
 
-        messages = [
-            Message(
-                chat_id=chat.id,
-                exchange_id=exchange.id,
-                task_id=None,
-                sender_id=first_user_id,
-                content="Привет! Увидел твой отклик, давай обсудим обмен навыками.",
-            ),
-            Message(
-                chat_id=chat.id,
-                exchange_id=exchange.id,
-                task_id=None,
-                sender_id=second_user_id,
-                content="Привет! Да, мне интересно. Что удобнее разобрать сначала?",
-            ),
-            Message(
-                chat_id=chat.id,
-                exchange_id=exchange.id,
-                task_id=None,
-                sender_id=first_user_id,
-                content="Предлагаю начать с короткого созвона и плана занятий.",
-            ),
-            Message(
-                chat_id=chat.id,
-                exchange_id=exchange.id,
-                task_id=None,
-                sender_id=second_user_id,
-                content="Отлично, тогда договорились. Я подготовлю вопросы.",
-            ),
-        ]
+        messages: list[Message] = []
+
+        for index, content in enumerate(generate_chat_messages()):
+            sender_id = first_user_id if index % 2 == 0 else second_user_id
+            messages.append(
+                Message(
+                    chat_id=chat.id,
+                    exchange_id=exchange.id,
+                    task_id=None,
+                    sender_id=sender_id,
+                    content=content,
+                )
+            )
 
         if exchange.status == ExchangeStatus.completed:
             messages.append(
@@ -65,7 +53,7 @@ async def create_chats_and_messages(
                     exchange_id=exchange.id,
                     task_id=None,
                     sender_id=second_user_id,
-                    content="Спасибо за обмен! Всё прошло отлично.",
+                    content=generate_completed_message(),
                 )
             )
 
@@ -76,7 +64,7 @@ async def create_chats_and_messages(
                     exchange_id=exchange.id,
                     task_id=None,
                     sender_id=first_user_id,
-                    content="Пока не получается продолжить, давай отменим сделку.",
+                    content=generate_cancelled_message(),
                 )
             )
 
