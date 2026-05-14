@@ -161,3 +161,4 @@ async def create_user_skills(
             )
 
     await session.flush()
+
