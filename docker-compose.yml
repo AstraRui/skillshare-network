@@ -53,6 +53,7 @@ services:
       - /app/node_modules  # Важно: не перезаписывать модули внутри контейнера локальными
     environment:
       - CHOKIDAR_USEPOLLING=true # Помогает hot-reload работать внутри Docker
+      - VITE_PROXY_TARGET=http://backend:8000
     depends_on:
       - backend
 
