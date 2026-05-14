@@ -63,8 +63,8 @@ async def seed_test_data() -> None:
         await create_interests(session, users, listings)
 
         exchanges = await create_exchanges(session, users, listings, skills)
-        await create_chats_and_messages(session, exchanges)
         await create_tasks(session, exchanges)
+        await create_chats_and_messages(session, exchanges)
         await create_reviews(session, exchanges)
 
         await session.commit()
