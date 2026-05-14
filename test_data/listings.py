@@ -9,79 +9,23 @@ from app.models import (
     ListingStatus,
     User,
 )
+from app.seed.test_data.generators import (
+    generate_interest_message,
+    generate_listing_description,
+)
 
 
 LISTINGS_DATA = [
-    {
-        "author": 0,
-        "title": "Научу Python за помощь с Figma",
-        "description": "Помогу разобраться с основами Python, функциями, классами и простыми API.",
-        "offering": "Python, FastAPI, SQL",
-        "seeking": "Figma и UX/UI для оформления личного проекта",
-    },
-    {
-        "author": 1,
-        "title": "Дизайн интерфейса в обмен на английский",
-        "description": "Могу сделать прототип сайта или мобильного приложения в Figma.",
-        "offering": "Figma, UX/UI",
-        "seeking": "Разговорная практика английского языка",
-    },
-    {
-        "author": 2,
-        "title": "Помогу с SQL и базами данных",
-        "description": "Объясню таблицы, связи, JOIN, индексы и простые запросы.",
-        "offering": "SQL",
-        "seeking": "Видеомонтаж для коротких роликов",
-    },
-    {
-        "author": 3,
-        "title": "Английский язык для начинающих",
-        "description": "Провожу разговорную практику и объясняю грамматику простым языком.",
-        "offering": "Английский язык",
-        "seeking": "Python или HTML/CSS",
-    },
-    {
-        "author": 4,
-        "title": "Настрою таргетированную рекламу",
-        "description": "Помогу с базовой стратегией, аудиторией и рекламными креативами.",
-        "offering": "Таргетированная реклама, SMM",
-        "seeking": "Фотография и цветокоррекция",
-    },
-    {
-        "author": 5,
-        "title": "Научу играть на гитаре",
-        "description": "Подберем простые песни, разберем аккорды и ритм.",
-        "offering": "Гитара",
-        "seeking": "Копирайтинг и оформление текстов",
-    },
-    {
-        "author": 6,
-        "title": "Мелкий бытовой ремонт",
-        "description": "Подскажу по электрике, сборке мебели и мелким работам дома.",
-        "offering": "Электрика, сборка мебели",
-        "seeking": "Немецкий язык",
-    },
-    {
-        "author": 7,
-        "title": "Сделаю монтаж видео",
-        "description": "Помогу смонтировать короткие ролики для соцсетей.",
-        "offering": "Видеомонтаж, цветокоррекция",
-        "seeking": "FastAPI и backend-разработка",
-    },
-    {
-        "author": 8,
-        "title": "HTML/CSS для старта",
-        "description": "Объясню верстку, flexbox, grid и адаптив.",
-        "offering": "HTML/CSS",
-        "seeking": "Photoshop",
-    },
-    {
-        "author": 9,
-        "title": "Помогу с SMM-стратегией",
-        "description": "Разберем контент-план, оформление профиля и продвижение.",
-        "offering": "SMM, копирайтинг",
-        "seeking": "Фотография",
-    },
+    {"author": 0, "title": "Научу Python за помощь с Figma", "offering": "Python, FastAPI, SQL", "seeking": "Figma и UX/UI для оформления личного проекта"},
+    {"author": 1, "title": "Дизайн интерфейса в обмен на английский", "offering": "Figma, UX/UI", "seeking": "Разговорная практика английского языка"},
+    {"author": 2, "title": "Помогу с SQL и базами данных", "offering": "SQL", "seeking": "Видеомонтаж для коротких роликов"},
+    {"author": 3, "title": "Английский язык для начинающих", "offering": "Английский язык", "seeking": "Python или HTML/CSS"},
+    {"author": 4, "title": "Настрою таргетированную рекламу", "offering": "Таргетированная реклама, SMM", "seeking": "Фотография и цветокоррекция"},
+    {"author": 5, "title": "Научу играть на гитаре", "offering": "Гитара", "seeking": "Копирайтинг и оформление текстов"},
+    {"author": 6, "title": "Мелкий бытовой ремонт", "offering": "Электрика, сборка мебели", "seeking": "Немецкий язык"},
+    {"author": 7, "title": "Сделаю монтаж видео", "offering": "Видеомонтаж, цветокоррекция", "seeking": "FastAPI и backend-разработка"},
+    {"author": 8, "title": "HTML/CSS для старта", "offering": "HTML/CSS", "seeking": "Photoshop"},
+    {"author": 9, "title": "Помогу с SMM-стратегией", "offering": "SMM, копирайтинг", "seeking": "Фотография"},
 ]
 
 INTERESTS_DATA = [
@@ -112,7 +56,7 @@ async def create_listings(
         listing = Listing(
             author_id=users[item["author"]].id,
             title=item["title"],
-            description=item["description"],
+            description=generate_listing_description(),
             offering_summary=item["offering"],
             seeking_summary=item["seeking"],
             status=ListingStatus.published,
@@ -134,7 +78,7 @@ async def create_interests(
             ListingInterest(
                 listing_id=listings[listing_index].id,
                 responder_id=users[responder_index].id,
-                message="Здравствуйте! Мне интересно ваше предложение. Готов обсудить обмен навыками.",
+                message=generate_interest_message(),
                 status=status,
             )
         )
