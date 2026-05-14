@@ -8,9 +8,24 @@ const VIEW_W = 800
 const VIEW_H = 500
 const centerX = VIEW_W / 2
 const centerY = VIEW_H / 2
+/** Одинаковая длина всех рёбер от CORE USER до периферии (логические единицы viewBox). */
+const SPOKE_RADIUS = 172
+
+function radialXY(index, total, r, cx, cy) {
+  const angle = -Math.PI / 2 + (index / total) * 2 * Math.PI
+  return {
+    x: cx + r * Math.cos(angle),
+    y: cy + r * Math.sin(angle),
+  }
+}
 
 function MatchingPage() {
   const [hoveredNode, setHoveredNode] = useState(null)
+
+  const nodes = matchingNodes.map((m, i) => ({
+    ...m,
+    ...radialXY(i, matchingNodes.length, SPOKE_RADIUS, centerX, centerY),
+  }))
 
   const nodeStyle = (m) => {
     const leftPct = (m.x / VIEW_W) * 100
@@ -30,7 +45,7 @@ function MatchingPage() {
           AI CORE <span className="text-indigo-500">VISUALIZER</span>
         </h2>
         <span className="inline-flex w-fit rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-[10px] font-bold text-green-400">
-          LIVE: 1,421 NODES
+          LIVE: {nodes.length} NODES
         </span>
       </div>
       <div className="relative flex min-h-[560px] w-full flex-col items-center justify-center overflow-hidden rounded-[40px] border border-white/5 bg-slate-950 px-4 pb-28 pt-6 shadow-2xl md:px-6 md:pb-32">
@@ -45,7 +60,7 @@ function MatchingPage() {
             viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
             preserveAspectRatio="xMidYMid meet"
           >
-            {matchingNodes.map((m) => (
+            {nodes.map((m) => (
               <g key={m.id}>
                 <line
                   x1={centerX}
@@ -75,7 +90,7 @@ function MatchingPage() {
               </span>
             </div>
           </div>
-          {matchingNodes.map((m) => (
+          {nodes.map((m) => (
             <div
               key={m.id}
               role="presentation"
@@ -112,17 +127,17 @@ function MatchingPage() {
             <div className="flex flex-wrap items-center gap-4 sm:space-x-6">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
-                  {matchingNodes.find((m) => m.id === hoveredNode)?.skill}
+                  {nodes.find((m) => m.id === hoveredNode)?.skill}
                 </p>
                 <p className="font-bold text-white">
-                  {matchingNodes.find((m) => m.id === hoveredNode)?.name}
+                  {nodes.find((m) => m.id === hoveredNode)?.name}
                 </p>
               </div>
               <div className="hidden h-8 w-px bg-white/10 sm:block" />
               <div>
                 <p className="text-[10px] font-bold uppercase text-slate-500">Отношение</p>
                 <p className="text-xs text-white">
-                  {matchingNodes.find((m) => m.id === hoveredNode)?.reason}
+                  {nodes.find((m) => m.id === hoveredNode)?.reason}
                 </p>
               </div>
               <Link

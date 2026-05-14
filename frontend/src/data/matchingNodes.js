@@ -1,4 +1,4 @@
-/** Данные графа для экрана Matching (как в gog.html). */
+/** Данные графа для экрана Matching — координаты считаются в MatchingPage (равные спицы от центра). */
 export const matchingNodes = [
   {
     id: 'm1',
@@ -7,8 +7,6 @@ export const matchingNodes = [
     type: 'incoming',
     reason: 'Нужен дизайн CRM',
     gives: 'Backend на Python',
-    x: 200,
-    y: 100,
   },
   {
     id: 'm2',
@@ -17,8 +15,6 @@ export const matchingNodes = [
     type: 'incoming',
     reason: 'Редизайн лендинга',
     gives: 'Юр. аудит',
-    x: 550,
-    y: 120,
   },
   {
     id: 'm3',
@@ -27,8 +23,6 @@ export const matchingNodes = [
     type: 'outgoing',
     reason: 'Вам нужен рост',
     gives: 'Маркетинг план',
-    x: 620,
-    y: 300,
   },
   {
     id: 'm4',
@@ -37,8 +31,6 @@ export const matchingNodes = [
     type: 'predictive',
     reason: 'Масштабирование',
     gives: 'Cloud Setup',
-    x: 450,
-    y: 420,
   },
   {
     id: 'm5',
@@ -47,7 +39,29 @@ export const matchingNodes = [
     type: 'outgoing',
     reason: 'Контент для портфолио',
     gives: 'Тексты',
-    x: 180,
-    y: 350,
+  },
+  {
+    id: 'm6',
+    name: 'Елена П.',
+    skill: 'UX Research',
+    type: 'incoming',
+    reason: 'Интервью с пользователями',
+    gives: 'Юзабилити-отчёт',
+  },
+  {
+    id: 'm7',
+    name: 'Сергей Н.',
+    skill: 'Data Viz',
+    type: 'incoming',
+    reason: 'Дашборды для инвесторов',
+    gives: 'BI и визуализация',
+  },
+  {
+    id: 'm8',
+    name: 'AI Match',
+    skill: 'ML Ops',
+    type: 'predictive',
+    reason: 'Прогноз спроса',
+    gives: 'Рекомендации',
   },
 ]

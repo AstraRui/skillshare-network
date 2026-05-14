@@ -37,14 +37,16 @@ function Navigation() {
             </span>
           </NavLink>
 
-          <NavLink
-            to="/profile"
-            className="flex shrink-0 items-center space-x-3 rounded-xl border border-white/10 bg-white/5 p-1.5 transition hover:bg-white/10 md:hidden"
-          >
-            <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-600 text-[10px] font-bold text-white">
-              {isAuthenticated ? userInitials : '?'}
-            </div>
-          </NavLink>
+          {isAuthenticated ? (
+            <NavLink
+              to="/profile"
+              className="flex shrink-0 items-center space-x-3 rounded-xl border border-white/10 bg-white/5 p-1.5 transition hover:bg-white/10 md:hidden"
+            >
+              <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-600 text-[10px] font-bold text-white">
+                {userInitials}
+              </div>
+            </NavLink>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:flex-1 md:justify-center md:gap-0 md:space-x-6">
@@ -68,31 +70,26 @@ function Navigation() {
           ))}
         </div>
 
-        <div className="hidden items-center justify-end space-x-4 md:flex md:shrink-0">
-          <NavLink
-            to="/profile"
-            className="flex items-center space-x-3 rounded-xl border border-white/10 bg-white/5 p-1.5 transition hover:bg-white/10"
-          >
-            <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-600 text-[10px] font-bold text-white">
-              {isAuthenticated ? userInitials : '?'}
-            </div>
-            <div className="hidden pr-2 text-left lg:block">
-              {isAuthenticated && email ? (
-                <>
+        {isAuthenticated ? (
+          <div className="hidden items-center justify-end space-x-4 md:flex md:shrink-0">
+            <NavLink
+              to="/profile"
+              className="flex items-center space-x-3 rounded-xl border border-white/10 bg-white/5 p-1.5 transition hover:bg-white/10"
+            >
+              <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-600 text-[10px] font-bold text-white">
+                {userInitials}
+              </div>
+              {email ? (
+                <div className="hidden pr-2 text-left lg:block">
                   <p className="max-w-[140px] truncate text-[10px] font-black leading-none text-white">
                     {truncateEmail(email, 24)}
                   </p>
                   <p className="text-[8px] uppercase tracking-tighter text-slate-500">Аккаунт</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-[10px] font-black leading-none text-white">4.92 ★</p>
-                  <p className="text-[8px] uppercase tracking-tighter text-slate-500">Reputation</p>
-                </>
-              )}
-            </div>
-          </NavLink>
-        </div>
+                </div>
+              ) : null}
+            </NavLink>
+          </div>
+        ) : null}
       </div>
     </nav>
   )
