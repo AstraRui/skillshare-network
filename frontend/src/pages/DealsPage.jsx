@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
+import LoadingHint from '../components/ui/LoadingHint.jsx'
 import { api } from '../api/client.js'
 
 const mockOffers = [
@@ -62,10 +63,12 @@ function DealsPage() {
   const [offers, setOffers] = useState([])
   const [fromApi, setFromApi] = useState(false)
   const [loadError, setLoadError] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
 
   const load = useCallback(async () => {
     setLoadError(null)
+    setLoading(true)
     try {
       const rows = await api.listings({})
       if (rows.length) {
@@ -79,6 +82,8 @@ function DealsPage() {
       setLoadError(e.message)
       setOffers(mockOffers)
       setFromApi(false)
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -109,6 +114,11 @@ function DealsPage() {
             Global <span className="text-indigo-500">Market</span>
           </h2>
           <p className="mt-2 text-sm text-slate-500">Каталог открытых предложений в сети.</p>
+          {loading ? (
+            <div className="mt-2">
+              <LoadingHint label="Загружаем каталог…" />
+            </div>
+          ) : null}
           {loadError ? (
             <p className="mt-2 text-xs text-amber-400/90">
               API: {loadError} — показаны демо-карточки.

@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { api } from '../api/client.js'
 import { jwtUserId } from '../lib/jwt.js'
+import { initialsFromEmail } from '../lib/userDisplay.js'
 
 const AuthContext = createContext(null)
 
@@ -18,6 +19,11 @@ export function AuthProvider({ children }) {
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY))
 
   const userId = useMemo(() => (token ? jwtUserId(token) : null), [token])
+
+  const userInitials = useMemo(() => {
+    if (!email) return '?'
+    return initialsFromEmail(email)
+  }, [email])
 
   const login = useCallback(async (loginEmail, password) => {
     const { access_token: accessToken } = await api.login(loginEmail, password)
@@ -43,12 +49,13 @@ export function AuthProvider({ children }) {
       token,
       userId,
       email,
+      userInitials,
       isAuthenticated: Boolean(token && userId != null),
       login,
       register,
       logout,
     }),
-    [token, userId, email, login, register, logout],
+    [token, userId, email, userInitials, login, register, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

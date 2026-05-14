@@ -7,6 +7,8 @@ import {
   User,
   Zap,
 } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { truncateEmail } from '../../lib/userDisplay.js'
 
 const navItems = [
   { to: '/', label: 'Обзор', Icon: BarChart3, end: true },
@@ -17,6 +19,8 @@ const navItems = [
 ]
 
 function Navigation() {
+  const { isAuthenticated, userInitials, email } = useAuth()
+
   return (
     <nav className="fixed left-0 right-0 top-0 z-50 px-4 py-4 md:px-6" aria-label="Главная навигация">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 shadow-2xl backdrop-blur-xl md:flex-row md:items-center md:justify-between md:gap-0 md:px-6">
@@ -38,7 +42,7 @@ function Navigation() {
             className="flex shrink-0 items-center space-x-3 rounded-xl border border-white/10 bg-white/5 p-1.5 transition hover:bg-white/10 md:hidden"
           >
             <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-600 text-[10px] font-bold text-white">
-              АИ
+              {isAuthenticated ? userInitials : '?'}
             </div>
           </NavLink>
         </div>
@@ -70,11 +74,22 @@ function Navigation() {
             className="flex items-center space-x-3 rounded-xl border border-white/10 bg-white/5 p-1.5 transition hover:bg-white/10"
           >
             <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-600 text-[10px] font-bold text-white">
-              АИ
+              {isAuthenticated ? userInitials : '?'}
             </div>
             <div className="hidden pr-2 text-left lg:block">
-              <p className="text-[10px] font-black leading-none text-white">4.92 ★</p>
-              <p className="text-[8px] uppercase tracking-tighter text-slate-500">Reputation</p>
+              {isAuthenticated && email ? (
+                <>
+                  <p className="max-w-[140px] truncate text-[10px] font-black leading-none text-white">
+                    {truncateEmail(email, 24)}
+                  </p>
+                  <p className="text-[8px] uppercase tracking-tighter text-slate-500">Аккаунт</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[10px] font-black leading-none text-white">4.92 ★</p>
+                  <p className="text-[8px] uppercase tracking-tighter text-slate-500">Reputation</p>
+                </>
+              )}
             </div>
           </NavLink>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import LoadingHint from '../components/ui/LoadingHint.jsx'
 import { api } from '../api/client.js'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -31,11 +32,13 @@ function DashboardPage() {
   const [exchanges, setExchanges] = useState([])
   const [listingsById, setListingsById] = useState({})
   const [loadError, setLoadError] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) return
     let cancelled = false
     ;(async () => {
+      setLoading(true)
       try {
         const [ex, lists] = await Promise.all([api.myExchanges(), api.listings({})])
         if (cancelled) return
@@ -46,6 +49,8 @@ function DashboardPage() {
         setLoadError(null)
       } catch (e) {
         if (!cancelled) setLoadError(e.message)
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     })()
     return () => {
@@ -72,6 +77,7 @@ function DashboardPage() {
             {loadError}
           </p>
         ) : null}
+        {isAuthenticated && loading ? <LoadingHint label="Подтягиваем сделки…" /> : null}
         {!isAuthenticated ? (
           <p className="text-sm text-slate-500">
             Войдите в профиль, чтобы подтянуть активные сделки с бэкенда.

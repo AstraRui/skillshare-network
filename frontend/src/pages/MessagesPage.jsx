@@ -6,6 +6,7 @@ import {
   Send,
   Smile,
 } from 'lucide-react'
+import LoadingHint from '../components/ui/LoadingHint.jsx'
 import { api } from '../api/client.js'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -155,7 +156,9 @@ function MessagesPage() {
             <p className="px-2 text-xs text-slate-500">Войдите, чтобы видеть сделки с сервера.</p>
           ) : null}
           {loadingList ? (
-            <p className="px-2 text-xs text-slate-500">Загрузка…</p>
+            <div className="px-2">
+              <LoadingHint label="Загрузка списка…" />
+            </div>
           ) : null}
           {sidebarItems.map((chat) => (
             <button
@@ -253,7 +256,9 @@ function MessagesPage() {
 
         <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-[radial-gradient(ellipse_at_center,#6366f105,transparent)] p-4 sm:p-6">
           {useApi && loadingMsg ? (
-            <p className="text-xs text-slate-500">Сообщения…</p>
+            <div className="px-1">
+              <LoadingHint label="Загрузка сообщений…" />
+            </div>
           ) : null}
           {useApi && messages.length === 0 && !loadingMsg ? (
             <p className="text-xs text-slate-500">Пока нет сообщений — напишите первым.</p>

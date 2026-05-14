@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   Award,
   Bell,
@@ -22,6 +23,7 @@ const userProfile = {
 }
 
 function ProfilePage() {
+  const location = useLocation()
   const { isAuthenticated, userId, email, login, register, logout } = useAuth()
   const [loginEmail, setLoginEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -82,6 +84,15 @@ function ProfilePage() {
 
   return (
     <div className="animate-page grid grid-cols-1 gap-8 lg:grid-cols-4">
+      {typeof location.state?.from === 'string' && location.state.from ? (
+        <div className="lg:col-span-4">
+          <p className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            Для доступа к{' '}
+            <span className="font-mono text-amber-50">{location.state.from}</span> войдите в аккаунт
+            или зарегистрируйтесь.
+          </p>
+        </div>
+      ) : null}
       <div className="space-y-6 lg:col-span-1">
         <div className="rounded-[40px] border border-white/5 bg-slate-900 p-6 text-center">
           <h3 className="mb-4 text-left text-sm font-black uppercase tracking-widest text-white">
