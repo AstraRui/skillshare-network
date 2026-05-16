@@ -2,8 +2,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 /**
- * Дочерние маршруты доступны только после входа (токен + userId из JWT).
- * Без смены визуала страниц — редирект на профиль.
+ * Дочерние маршруты только для авторизованных. Гостя отправляем в каталог и открываем модалку входа.
  */
 function RequireAuth() {
   const { isAuthenticated } = useAuth()
@@ -12,9 +11,12 @@ function RequireAuth() {
   if (!isAuthenticated) {
     return (
       <Navigate
-        to="/profile"
+        to="/deals"
         replace
-        state={{ from: location.pathname + location.search }}
+        state={{
+          openAuth: true,
+          from: location.pathname + location.search,
+        }}
       />
     )
   }

@@ -1,4 +1,6 @@
 import { Outlet } from 'react-router-dom'
+import AuthModal from '../auth/AuthModal.jsx'
+import OpenAuthFromLocation from '../auth/OpenAuthFromLocation.jsx'
 import Navigation from './Navigation.jsx'
 
 function AppLayout() {
@@ -14,6 +16,8 @@ function AppLayout() {
       />
 
       <Navigation />
+      <OpenAuthFromLocation />
+      <AuthModal />
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-24 md:px-6 md:pb-20 md:pt-32">
         <Outlet />

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 import {
   Award,
   Bell,
@@ -23,18 +22,11 @@ const userProfile = {
 }
 
 function ProfilePage() {
-  const location = useLocation()
-  const { isAuthenticated, userId, email, login, register, logout } = useAuth()
-  const [loginEmail, setLoginEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [mode, setMode] = useState('login')
-  const [formError, setFormError] = useState(null)
-  const [formOk, setFormOk] = useState(null)
+  const { userId, email, logout } = useAuth()
   const [myListings, setMyListings] = useState([])
 
   useEffect(() => {
-    if (!isAuthenticated || !userId) return
+    if (!userId) return
     let c = false
     queueMicrotask(() => {
       void (async () => {
@@ -49,137 +41,30 @@ function ProfilePage() {
     return () => {
       c = true
     }
-  }, [isAuthenticated, userId])
-
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    setFormError(null)
-    setFormOk(null)
-    try {
-      await login(loginEmail.trim(), password)
-      setFormOk('Вход выполнен')
-      setPassword('')
-    } catch (err) {
-      setFormError(err.message || 'Ошибка входа')
-    }
-  }
-
-  const handleRegister = async (e) => {
-    e.preventDefault()
-    setFormError(null)
-    setFormOk(null)
-    try {
-      await register({
-        email: loginEmail.trim(),
-        password,
-        full_name: fullName.trim() || undefined,
-      })
-      setFormOk('Аккаунт создан. Теперь войдите.')
-      setMode('login')
-      setPassword('')
-    } catch (err) {
-      setFormError(err.message || 'Ошибка регистрации')
-    }
-  }
+  }, [userId])
 
   return (
     <div className="animate-page grid grid-cols-1 gap-8 lg:grid-cols-4">
-      {typeof location.state?.from === 'string' && location.state.from ? (
-        <div className="lg:col-span-4">
-          <p className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-            Для доступа к{' '}
-            <span className="font-mono text-amber-50">{location.state.from}</span> войдите в аккаунт
-            или зарегистрируйтесь.
-          </p>
-        </div>
-      ) : null}
       <div className="space-y-6 lg:col-span-1">
         <div className="rounded-[40px] border border-white/5 bg-slate-900 p-6 text-center">
           <h3 className="mb-4 text-left text-sm font-black uppercase tracking-widest text-white">
             Аккаунт
           </h3>
-          {isAuthenticated ? (
-            <div className="space-y-3 text-left text-sm text-slate-300">
-              <p>
-                <span className="text-slate-500">Сессия:</span> {email}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  logout()
-                  setFormOk(null)
-                }}
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-bold text-white transition hover:bg-white/10"
-              >
-                Выйти из аккаунта
-              </button>
-            </div>
-          ) : (
-            <form
-              className="space-y-3 text-left"
-              onSubmit={mode === 'login' ? handleLogin : handleRegister}
+          <div className="space-y-3 text-left text-sm text-slate-300">
+            <p>
+              <span className="text-slate-500">Сессия:</span> {email}
+            </p>
+            <button
+              type="button"
+              onClick={logout}
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-bold text-white transition hover:bg-white/10"
             >
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMode('login')}
-                  className={`flex-1 rounded-lg py-2 text-[10px] font-black uppercase ${
-                    mode === 'login' ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400'
-                  }`}
-                >
-                  Вход
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('register')}
-                  className={`flex-1 rounded-lg py-2 text-[10px] font-black uppercase ${
-                    mode === 'register' ? 'bg-indigo-600 text-white' : 'bg-white/5 text-slate-400'
-                  }`}
-                >
-                  Регистрация
-                </button>
-              </div>
-              {mode === 'register' ? (
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Имя (необязательно)"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
-                />
-              ) : null}
-              <input
-                type="email"
-                required
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
-              />
-              <input
-                type="password"
-                required
-                minLength={10}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Пароль (≥10 символов)"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
-              />
-              {formError ? <p className="text-xs text-red-400">{formError}</p> : null}
-              {formOk ? <p className="text-xs text-green-400">{formOk}</p> : null}
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-indigo-600 py-2.5 text-xs font-black uppercase tracking-widest text-white hover:bg-indigo-500"
-              >
-                {mode === 'login' ? 'Войти' : 'Создать аккаунт'}
-              </button>
-              <p className="text-[10px] leading-relaxed text-slate-500">
-                Бэкенд ожидает заголовок <code className="text-indigo-300">X-User-Id</code> — он
-                выставляется автоматически после входа (id из JWT).
-              </p>
-            </form>
-          )}
+              Выйти из аккаунта
+            </button>
+          </div>
+?
         </div>
-
+?
         <div className="group relative overflow-hidden rounded-[40px] border border-white/5 bg-slate-900 p-8 text-center">
           <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500" />
           <div className="mx-auto mb-6 flex size-24 rotate-3 items-center justify-center rounded-[32px] bg-indigo-600 text-3xl font-black text-white shadow-2xl transition-transform group-hover:rotate-0">
@@ -258,7 +143,7 @@ function ProfilePage() {
             </button>
           </div>
 
-          {isAuthenticated && myListings.length > 0 ? (
+          {myListings.length > 0 ? (
             <div className="mb-8 rounded-2xl border border-white/10 bg-white/5 p-4 text-left">
               <h4 className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Мои объявления (API)
