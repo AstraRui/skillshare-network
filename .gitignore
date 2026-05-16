@@ -19,11 +19,11 @@ var/
 sdist/
 develop-eggs/
 .installed.cfg
-# Только корень репо — иначе игнорируется frontend/src/lib и любой другой lib/
+
 /lib/
 /lib64/
 
-# Virtual environments
+
 .venv/
 venv/
 env/
