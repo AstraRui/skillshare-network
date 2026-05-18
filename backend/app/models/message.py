@@ -47,6 +47,4 @@ class Message(Base):
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     chat = relationship("Chat", back_populates="messages")
-    exchange = relationship("Exchange", back_populates="messages")
-    task = relationship("Task", back_populates="messages")
     sender = relationship("User", back_populates="messages")
