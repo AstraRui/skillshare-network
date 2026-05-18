@@ -62,8 +62,6 @@ class Listing(Base):
 
 
 class ListingInterest(Base):
-    """Отклик другого пользователя на объявление."""
-
     __tablename__ = "listing_interests"
     __table_args__ = (
         UniqueConstraint("listing_id", "responder_id", name="uq_listing_interest_responder"),

@@ -158,6 +158,7 @@ async def accept_listing_interest(
         is_chain=False,
     )
     db.add(exchange)
+    
     await db.flush()
     await db.refresh(exchange)
     return exchange
@@ -211,6 +212,7 @@ async def update_exchange_status(
         exchange.completed_by_initiator = False
         exchange.completed_by_partner = False
         exchange.completed_at = None
+        current_user.last_active_at = datetime.now(UTC)
     await db.flush()
     await db.refresh(exchange)
     return exchange
@@ -244,7 +246,7 @@ async def confirm_exchange_completion(
     if exchange.completed_by_initiator and exchange.completed_by_partner:
         exchange.status = ExchangeStatus.completed
         exchange.completed_at = datetime.now(UTC)
-
+        current_user.last_active_at = datetime.now(UTC)
     await db.flush()
     await db.refresh(exchange)
     return exchange
@@ -295,6 +297,7 @@ async def post_exchange_message(
     if not message.content:
         raise HTTPException(status_code=400, detail="Message content cannot be empty")
     db.add(message)
+    current_user.last_active_at = datetime.now(UTC)
     await db.flush()
     await db.refresh(message)
     return message

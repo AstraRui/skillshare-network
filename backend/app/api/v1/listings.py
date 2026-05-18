@@ -69,6 +69,7 @@ async def create_listing(
         status=payload.status,
     )
     db.add(listing)
+    current_user.last_active_at = datetime.now(UTC)
     await db.flush()
     await db.refresh(listing)
     return listing
@@ -113,6 +114,7 @@ async def create_listing_interest(
         status=ListingInterestStatus.pending,
     )
     db.add(interest)
+    current_user.last_active_at = datetime.now(UTC)
     try:
         await db.flush()
     except IntegrityError as exc:

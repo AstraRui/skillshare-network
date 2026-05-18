@@ -68,7 +68,6 @@ class Exchange(Base):
     chat = relationship(
         "Chat", back_populates="exchange", uselist=False, cascade="all, delete-orphan"
     )
-    messages = relationship("Message", back_populates="exchange", cascade="all, delete-orphan")
 
 
 class ExchangeParticipant(Base):

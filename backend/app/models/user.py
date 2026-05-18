@@ -30,6 +30,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    last_active_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     offered_skills = relationship(
         "UserSkillsOffered", back_populates="user", cascade="all, delete-orphan"
