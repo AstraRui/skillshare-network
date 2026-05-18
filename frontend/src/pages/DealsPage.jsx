@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import LoadingHint from '../components/ui/LoadingHint.jsx'
 import { api } from '../api/client.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const mockOffers = [
   {
@@ -59,6 +60,7 @@ function listingToOffer(listing) {
 }
 
 function DealsPage() {
+  const { isAuthenticated, openAuthModal } = useAuth()
   const [query, setQuery] = useState('')
   const [offers, setOffers] = useState([])
   const [fromApi, setFromApi] = useState(false)
@@ -151,7 +153,13 @@ function DealsPage() {
           <button
             key={offer.id}
             type="button"
-            onClick={() => setSelected(offer)}
+            onClick={() => {
+              if (!isAuthenticated) {
+                openAuthModal()
+                return
+              }
+              setSelected(offer)
+            }}
             className="group relative cursor-pointer overflow-hidden rounded-[32px] border border-white/5 bg-slate-900/40 p-6 text-left transition-all duration-300 hover:-translate-y-2 hover:border-indigo-500/40 hover:bg-slate-800/60 hover:shadow-[0_15px_40px_-10px_rgba(99,102,241,0.3)]"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />

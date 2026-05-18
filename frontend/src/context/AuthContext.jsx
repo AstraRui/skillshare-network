@@ -17,6 +17,10 @@ const EMAIL_KEY = 'ssn_email'
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY))
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+
+  const openAuthModal = useCallback(() => setAuthModalOpen(true), [])
+  const closeAuthModal = useCallback(() => setAuthModalOpen(false), [])
 
   const userId = useMemo(() => (token ? jwtUserId(token) : null), [token])
 
@@ -54,8 +58,22 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      authModalOpen,
+      openAuthModal,
+      closeAuthModal,
     }),
-    [token, userId, email, userInitials, login, register, logout],
+    [
+      token,
+      userId,
+      email,
+      userInitials,
+      login,
+      register,
+      logout,
+      authModalOpen,
+      openAuthModal,
+      closeAuthModal,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
