@@ -23,9 +23,9 @@ class Message(Base):
     __tablename__ = "messages"
     __table_args__ = (
         CheckConstraint(
-            "(task_id IS NOT NULL AND exchange_id IS NULL) OR "
-            "(task_id IS NULL AND exchange_id IS NOT NULL)",
-            name="ck_message_task_xor_exchange",
+            "(chat_id IS NOT NULL AND task_id IS NULL) OR "
+            "(task_id IS NOT NULL AND chat_id IS NULL)",
+            name="ck_message_context",
         ),
     )
 

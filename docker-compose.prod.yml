@@ -1,0 +1,73 @@
+# Production compose
+# Запуск: docker compose -f docker-compose.prod.yml up -d
+#
+# Перед запуском создать файлы секретов:
+#   echo "supersecretkey" > secrets/secret_key.txt
+#   echo "strongpassword" > secrets/db_password.txt
+#   chmod 600 secrets/*.txt
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: skillshare
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    secrets:
+      - db_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d skillshare"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      target: runtime
+    environment:
+      SSN_ENVIRONMENT: production
+      SSN_REDIS_URL: redis://redis:6379/0
+    secrets:
+      - secret_key
+      - db_password
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    # Не публикуем порт наружу — только через nginx
+    expose:
+      - "8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      target: runtime
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+
+secrets:
+  secret_key:
+    file: ./secrets/secret_key.txt
+  db_password:
+    file: ./secrets/db_password.txt
