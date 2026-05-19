@@ -26,22 +26,18 @@ async def get_chat(exchange_id: int, db: DB):
     return chat
 
 
-@router.get("/{chat_id}/messages", response_model=list[MessageRead])
-async def list_messages(chat_id: int, db: DB):
-    return await message_crud.get_messages(db, chat_id)
+@router.get("/exchanges/{exchange_id}/messages", response_model=list[MessageRead])
+async def list_messages(exchange_id: int, db: DB):
+    return await message_crud.get_messages_by_exchange(db, exchange_id)
 
 
-# Доделать после слива с авторизацией
-# @router.post("/{chat_id}/messages", response_model=ChatRead, status_code=201)
-# async def send_message(chat_id: int, body: MessageCreate, db: DB):
-#
-#
-
-
-@router.patch("/{chat_id}/messages/{message_id}", response_model=MessageRead)
-async def edit_message(chat_id: int, message_id: int, body: MessageUpdate, db: DB):
+@router.patch("/exchanges/{exchange_id}/messages/{message_id}", response_model=MessageRead)
+async def edit_message(exchange_id: int, message_id: int, body: MessageUpdate, db: DB):
     result = await db.execute(
-        select(Message).where(Message.chat_id == chat_id, Message.id == message_id)
+        select(Message).where(
+            Message.exchange_id == exchange_id,
+            Message.id == message_id,
+        )
     )
     msg = result.scalar_one_or_none()
     if not msg:
@@ -49,10 +45,13 @@ async def edit_message(chat_id: int, message_id: int, body: MessageUpdate, db: D
     return await message_crud.edit_message(db, msg, body.content)
 
 
-@router.delete("/{chat_id}/messages/{message_id}", response_model=MessageRead)
-async def delete_message(chat_id: int, message_id: int, db: DB):
+@router.delete("/exchanges/{exchange_id}/messages/{message_id}", response_model=MessageRead)
+async def delete_message(exchange_id: int, message_id: int, db: DB):
     result = await db.execute(
-        select(Message).where(Message.chat_id == chat_id, Message.id == message_id)
+        select(Message).where(
+            Message.exchange_id == exchange_id,
+            Message.id == message_id,
+        )
     )
     msg = result.scalar_one_or_none()
     if not msg:

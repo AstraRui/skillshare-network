@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   MoreVertical,
   Paperclip,
@@ -9,12 +10,6 @@ import {
 import LoadingHint from '../components/ui/LoadingHint.jsx'
 import { api } from '../api/client.js'
 import { useAuth } from '../context/AuthContext.jsx'
-
-const mockChats = [
-  { id: 1, name: 'Мария К. (Dev)', last: 'Когда созвонимся по API?', time: '12:45' },
-  { id: 2, name: 'Игорь С. (Legal)', last: 'Договор во вложении', time: 'Вчера' },
-  { id: 3, name: 'Анна В. (SMM)', last: 'Презентация готова', time: '02.05' },
-]
 
 function formatTime(iso) {
   if (!iso) return ''
@@ -30,26 +25,28 @@ const statusLabel = {
 }
 
 function MessagesPage() {
-  const { isAuthenticated, userId } = useAuth()
-  const [demoChatId, setDemoChatId] = useState(1)
+  const { userId } = useAuth()
   const [exchanges, setExchanges] = useState([])
-  const [listingsById, setListingsById] = useState({})
+  const [incomingInterests, setIncomingInterests] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [error, setError] = useState(null)
   const [loadingList, setLoadingList] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState(false)
+  const [acceptBusyId, setAcceptBusyId] = useState(null)
+  const [actionBusy, setActionBusy] = useState(false)
+  const [myReview, setMyReview] = useState(null)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewFeedback, setReviewFeedback] = useState(null)
 
   const loadExchanges = useCallback(async () => {
-    if (!isAuthenticated) return
     setLoadingList(true)
     setError(null)
     try {
-      const [ex, lists] = await Promise.all([api.myExchanges(), api.listings({})])
-      const map = {}
-      for (const l of lists) map[l.id] = l
-      setListingsById(map)
+      const [ex, incoming] = await Promise.all([api.myExchanges(), api.incomingInterests()])
+      setIncomingInterests(incoming)
       setExchanges(ex)
       setSelectedId((prev) => {
         if (prev != null && ex.some((e) => e.id === prev)) return prev
@@ -60,7 +57,7 @@ function MessagesPage() {
     } finally {
       setLoadingList(false)
     }
-  }, [isAuthenticated])
+  }, [])
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -69,7 +66,7 @@ function MessagesPage() {
   }, [loadExchanges])
 
   const loadMessages = useCallback(async (exchangeId) => {
-    if (!exchangeId || !isAuthenticated) return
+    if (!exchangeId) return
     setLoadingMsg(true)
     setError(null)
     try {
@@ -81,7 +78,7 @@ function MessagesPage() {
     } finally {
       setLoadingMsg(false)
     }
-  }, [isAuthenticated])
+  }, [])
 
   useEffect(() => {
     if (selectedId == null) return
@@ -90,12 +87,46 @@ function MessagesPage() {
     })
   }, [selectedId, loadMessages])
 
+  useEffect(() => {
+    if (selectedId == null) return
+    const exchange = exchanges.find((e) => e.id === selectedId)
+    let cancelled = false
+    queueMicrotask(() => {
+      if (exchange?.status !== 'completed') {
+        setMyReview(null)
+        return
+      }
+      void api
+        .myExchangeReview(selectedId)
+        .then((review) => {
+          if (!cancelled) setMyReview(review)
+        })
+        .catch(() => {
+          if (!cancelled) setMyReview(null)
+        })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedId, exchanges])
+
+  const acceptIncoming = async (item) => {
+    setAcceptBusyId(item.id)
+    setError(null)
+    try {
+      const exchange = await api.acceptListingInterest(item.listing_id, item.responder_id)
+      await loadExchanges()
+      setSelectedId(exchange.id)
+      await loadMessages(exchange.id)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setAcceptBusyId(null)
+    }
+  }
+
   const selected = exchanges.find((e) => e.id === selectedId)
-  const title = selected?.listing_id
-    ? listingsById[selected.listing_id]?.title ?? `Сделка #${selected.id}`
-    : selected
-      ? `Сделка #${selected.id}`
-      : 'Чат'
+  const title = selected?.listing_title ?? (selected ? `Сделка #${selected.id}` : 'Чат')
 
   const send = async () => {
     const text = draft.trim()
@@ -111,28 +142,71 @@ function MessagesPage() {
 
   const confirmDone = async () => {
     if (!selectedId) return
+    setActionBusy(true)
+    setError(null)
     try {
       await api.confirmExchangeCompletion(selectedId)
       await loadExchanges()
       await loadMessages(selectedId)
     } catch (e) {
       setError(e.message)
+    } finally {
+      setActionBusy(false)
     }
   }
 
-  const useApi = isAuthenticated && exchanges.length > 0
-  const sidebarItems = useApi
-    ? exchanges.map((ex) => ({
-        id: ex.id,
-        name: ex.listing_id
-          ? listingsById[ex.listing_id]?.title ?? `Обмен #${ex.id}`
-          : `Обмен #${ex.id}`,
-        last: statusLabel[ex.status] ?? ex.status,
-        time: '',
-      }))
-    : mockChats
+  const startActiveSwap = async () => {
+    if (!selectedId) return
+    setActionBusy(true)
+    setError(null)
+    try {
+      await api.updateExchangeStatus(selectedId, 'active')
+      await loadExchanges()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setActionBusy(false)
+    }
+  }
 
-  const effectiveSelected = useApi ? selectedId : demoChatId
+  const submitReview = async () => {
+    if (!selectedId) return
+    setActionBusy(true)
+    setReviewFeedback(null)
+    setError(null)
+    try {
+      const review = await api.submitExchangeReview(selectedId, {
+        rating: reviewRating,
+        comment: reviewComment.trim() || null,
+      })
+      setMyReview(review)
+      setReviewFeedback({ type: 'ok', text: 'Спасибо! Отзыв сохранён.' })
+    } catch (e) {
+      setReviewFeedback({ type: 'err', text: e.message })
+    } finally {
+      setActionBusy(false)
+    }
+  }
+
+  const iAmInitiator = selected?.initiator_id === userId
+  const myConfirmed = iAmInitiator
+    ? selected?.completed_by_initiator
+    : selected?.completed_by_partner
+  const partnerConfirmed = iAmInitiator
+    ? selected?.completed_by_partner
+    : selected?.completed_by_initiator
+
+  const sidebarItems = exchanges.map((ex) => ({
+    id: ex.id,
+    name: ex.partner_full_name
+      ? `${ex.partner_full_name}`
+      : ex.listing_title ?? `Сделка #${ex.id}`,
+    subtitle: ex.listing_title ?? '',
+    last: statusLabel[ex.status] ?? ex.status,
+    time: '',
+  }))
+
+  const hasSelection = selectedId != null && exchanges.some((e) => e.id === selectedId)
 
   return (
     <div className="animate-page flex h-[min(700px,calc(100vh-10rem))] flex-col overflow-hidden rounded-[40px] border border-white/5 bg-slate-950/50 backdrop-blur-md md:flex-row">
@@ -152,8 +226,44 @@ function MessagesPage() {
           </div>
         </div>
         <div className="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-          {!isAuthenticated ? (
-            <p className="px-2 text-xs text-slate-500">Войдите, чтобы видеть сделки с сервера.</p>
+          {!loadingList && incomingInterests.length > 0 ? (
+            <div className="mb-3 space-y-2 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                Входящие отклики ({incomingInterests.length})
+              </p>
+              {incomingInterests.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-white/10 bg-black/20 p-2.5"
+                >
+                  <p className="text-[10px] font-bold text-white">{item.listing_title}</p>
+                  <p className="text-xs text-slate-400">
+                    {item.responder_full_name || `Пользователь #${item.responder_id}`}
+                  </p>
+                  {item.message ? (
+                    <p className="mt-1 line-clamp-2 text-[10px] text-slate-500">{item.message}</p>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={acceptBusyId != null}
+                    onClick={() => acceptIncoming(item)}
+                    className="mt-2 w-full rounded-lg bg-indigo-600 py-1.5 text-[9px] font-black uppercase text-white hover:bg-indigo-500 disabled:opacity-50"
+                  >
+                    {acceptBusyId === item.id ? '…' : 'Принять'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {!loadingList && exchanges.length === 0 && incomingInterests.length === 0 ? (
+            <p className="px-2 text-xs leading-relaxed text-slate-500">
+              Чатов пока нет. Если вы откликнулись на заказ — дождитесь, пока автор примет
+              отклик. Если вы автор — примите отклик в{' '}
+              <Link to="/deals" className="text-indigo-400 hover:text-indigo-300">
+                каталоге
+              </Link>{' '}
+              (своё объявление) или здесь, когда отклик появится выше.
+            </p>
           ) : null}
           {loadingList ? (
             <div className="px-2">
@@ -164,16 +274,16 @@ function MessagesPage() {
             <button
               key={chat.id}
               type="button"
-              onClick={() => (useApi ? setSelectedId(chat.id) : setDemoChatId(chat.id))}
+              onClick={() => setSelectedId(chat.id)}
               className={`flex w-full items-center space-x-3 rounded-2xl p-4 text-left transition-all ${
-                effectiveSelected === chat.id
+                selectedId === chat.id
                   ? 'border border-indigo-500/20 bg-indigo-600/10'
                   : 'border border-transparent hover:bg-white/5'
               }`}
             >
               <div
                 className={`flex size-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
-                  effectiveSelected === chat.id ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+                  selectedId === chat.id ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
                 }`}
               >
                 {String(chat.name).charAt(0)}
@@ -182,7 +292,7 @@ function MessagesPage() {
                 <div className="flex justify-between gap-2">
                   <p
                     className={`truncate text-xs font-bold ${
-                      effectiveSelected === chat.id ? 'text-white' : 'text-slate-300'
+                      selectedId === chat.id ? 'text-white' : 'text-slate-300'
                     }`}
                   >
                     {chat.name}
@@ -191,6 +301,9 @@ function MessagesPage() {
                     <span className="shrink-0 text-[8px] text-slate-500">{chat.time}</span>
                   ) : null}
                 </div>
+                {chat.subtitle ? (
+                  <p className="mt-0.5 truncate text-[9px] text-slate-600">{chat.subtitle}</p>
+                ) : null}
                 <p className="mt-1 truncate text-[10px] font-medium text-slate-500">{chat.last}</p>
               </div>
             </button>
@@ -202,14 +315,18 @@ function MessagesPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 p-4 sm:p-6">
           <div className="flex min-w-0 items-center space-x-4">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-lg font-black text-white">
-              M
+              {title.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-bold text-white">Мария Кузнецова</h3>
+              <h3 className="truncate text-sm font-bold text-white">{title}</h3>
               <div className="flex items-center space-x-2">
-                <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-green-500" />
+                {selected ? (
+                  <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-green-500" />
+                ) : null}
                 <span className="truncate text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                  {selected ? `${statusLabel[selected.status] ?? selected.status}: ${title}` : 'Демо-чат'}
+                  {selected
+                    ? (statusLabel[selected.status] ?? selected.status)
+                    : 'Выберите сделку слева'}
                 </span>
               </div>
             </div>
@@ -229,22 +346,26 @@ function MessagesPage() {
             >
               <MoreVertical size={18} />
             </button>
-            {useApi && selected?.status === 'active' ? (
+            {hasSelection && selected?.status === 'discussion' ? (
               <button
                 type="button"
+                disabled={actionBusy}
+                onClick={startActiveSwap}
+                className="rounded-xl border border-indigo-500/40 bg-indigo-600/20 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-indigo-200 transition hover:bg-indigo-600/40 disabled:opacity-50"
+              >
+                Начать обмен
+              </button>
+            ) : null}
+            {hasSelection && selected?.status === 'active' ? (
+              <button
+                type="button"
+                disabled={actionBusy || myConfirmed}
                 onClick={confirmDone}
-                className="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500"
+                className="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 disabled:opacity-50"
               >
-                Подтвердить выполнение
+                {myConfirmed ? 'Вы подтвердили' : 'Подтвердить выполнение'}
               </button>
-            ) : (
-              <button
-                type="button"
-                className="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20"
-              >
-                Завершить сделку
-              </button>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -255,15 +376,86 @@ function MessagesPage() {
         ) : null}
 
         <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto bg-[radial-gradient(ellipse_at_center,#6366f105,transparent)] p-4 sm:p-6">
-          {useApi && loadingMsg ? (
+          {!hasSelection ? (
+            <p className="text-xs text-slate-500">Выберите сделку в списке слева.</p>
+          ) : null}
+          {hasSelection && selected?.status === 'active' ? (
+            <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
+              {myConfirmed && partnerConfirmed
+                ? 'Оба подтвердили — сделка перейдёт в «Завершено».'
+                : myConfirmed
+                  ? 'Вы подтвердили. Ждём подтверждения партнёра.'
+                  : partnerConfirmed
+                    ? 'Партнёр подтвердил. Нажмите «Подтвердить выполнение», когда готовы.'
+                    : 'Когда обмен выполнен — оба участника нажимают «Подтвердить выполнение».'}
+            </p>
+          ) : null}
+          {hasSelection && selected?.status === 'completed' ? (
+            <section className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                Отзыв о партнёре
+              </p>
+              {myReview ? (
+                <p className="mt-2 text-sm text-slate-300">
+                  Вы оценили сделку на {myReview.rating}/5.
+                  {myReview.comment ? ` «${myReview.comment}»` : ''}
+                </p>
+              ) : (
+                <>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Оцените {selected.partner_full_name || 'партнёра'} после завершённой сделки.
+                  </p>
+                  <div className="mt-3 flex gap-1">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setReviewRating(n)}
+                        className={`size-9 rounded-lg text-sm font-bold transition ${
+                          reviewRating >= n
+                            ? 'bg-amber-500 text-slate-950'
+                            : 'bg-white/10 text-slate-500 hover:bg-white/20'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    rows={2}
+                    placeholder="Комментарий (необязательно)"
+                    className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50"
+                  />
+                  {reviewFeedback ? (
+                    <p
+                      className={`mt-2 text-xs ${reviewFeedback.type === 'ok' ? 'text-green-400' : 'text-red-400'}`}
+                    >
+                      {reviewFeedback.text}
+                    </p>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={actionBusy}
+                    onClick={submitReview}
+                    className="mt-3 rounded-xl bg-amber-500 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-950 hover:bg-amber-400 disabled:opacity-50"
+                  >
+                    {actionBusy ? 'Отправка…' : 'Отправить отзыв'}
+                  </button>
+                </>
+              )}
+            </section>
+          ) : null}
+          {hasSelection && loadingMsg ? (
             <div className="px-1">
               <LoadingHint label="Загрузка сообщений…" />
             </div>
           ) : null}
-          {useApi && messages.length === 0 && !loadingMsg ? (
+          {hasSelection && messages.length === 0 && !loadingMsg ? (
             <p className="text-xs text-slate-500">Пока нет сообщений — напишите первым.</p>
           ) : null}
-          {useApi
+          {hasSelection
             ? messages.map((msg) => {
                 const mine = msg.sender_id === userId
                 return (
@@ -285,38 +477,7 @@ function MessagesPage() {
                   </div>
                 )
               })
-            : [
-                <div
-                  key="1"
-                  className="max-w-[85%] rounded-3xl rounded-tl-none border border-white/5 bg-white/5 p-4 text-sm leading-relaxed text-slate-200 shadow-xl sm:max-w-[60%]"
-                >
-                  Привет! Я закончила базовую логику на Python. Нам нужно обсудить фронтенд часть,
-                  чтобы я знала какие эндпоинты тебе нужны в первую очередь.
-                  <p className="mt-2 font-mono text-[9px] text-slate-500">12:30</p>
-                </div>,
-                <div
-                  key="2"
-                  className="ml-auto max-w-[85%] rounded-3xl rounded-tr-none bg-indigo-600 p-4 text-sm leading-relaxed text-white shadow-2xl shadow-indigo-500/20 sm:max-w-[60%]"
-                >
-                  Супер! Мне важно сначала получить эндпоинты для авторизации и профиля. Дизайн я
-                  уже залил в Фигму, можешь посмотреть?
-                  <p className="mt-2 text-right font-mono text-[9px] text-indigo-300">
-                    12:34 • Прочитано
-                  </p>
-                </div>,
-                <div key="3" className="flex justify-center">
-                  <span className="rounded-full border border-white/10 bg-white/5 px-4 py-1 text-[9px] font-bold uppercase tracking-widest text-slate-500">
-                    Среда, 06 Мая
-                  </span>
-                </div>,
-                <div
-                  key="4"
-                  className="max-w-[85%] rounded-3xl rounded-tl-none border border-white/5 bg-white/5 p-4 text-sm leading-relaxed text-slate-200 sm:max-w-[60%]"
-                >
-                  Да, посмотрела. Дизайн огонь! Давай завтра в 11:00 созвонимся.
-                  <p className="mt-2 font-mono text-[9px] text-slate-500">12:45</p>
-                </div>,
-              ]}
+            : null}
         </div>
 
         <div className="border-t border-white/5 bg-slate-900/50 p-4 sm:p-6">
@@ -334,7 +495,12 @@ function MessagesPage() {
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && send()}
               placeholder="Введите сообщение..."
-              disabled={!useApi || !selectedId}
+              disabled={
+                !hasSelection ||
+                !selectedId ||
+                selected?.status === 'completed' ||
+                selected?.status === 'cancelled'
+              }
               className="min-w-0 flex-1 border-none bg-transparent px-2 text-sm text-white outline-none ring-0 placeholder:text-slate-600"
             />
             <button
@@ -347,7 +513,7 @@ function MessagesPage() {
             <button
               type="button"
               onClick={send}
-              disabled={!useApi || !selectedId}
+              disabled={!hasSelection || !selectedId}
               className="rounded-2xl bg-indigo-600 p-3 text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 disabled:opacity-40"
               aria-label="Отправить"
             >

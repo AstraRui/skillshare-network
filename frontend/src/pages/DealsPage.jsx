@@ -1,38 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Search, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search } from 'lucide-react'
+import DealListingModal from '../components/deals/DealListingModal.jsx'
 import LoadingHint from '../components/ui/LoadingHint.jsx'
 import { api } from '../api/client.js'
 import { useAuth } from '../context/AuthContext.jsx'
-
-const mockOffers = [
-  {
-    id: 'm1',
-    user: 'Мария К.',
-    role: 'Senior Python Dev',
-    offer: 'Обучение Python с нуля',
-    seeking: 'UI/UX Дизайн',
-    tags: ['Education', 'Python'],
-    type: 'mentorship',
-  },
-  {
-    id: 'm2',
-    user: 'Анна В.',
-    role: 'SMM Lead',
-    offer: 'Стратегия продвижения на 3 мес.',
-    seeking: 'Юридический аудит',
-    tags: ['Marketing', 'SMM'],
-    type: 'service',
-  },
-  {
-    id: 'm3',
-    user: 'Игорь С.',
-    role: 'Legal Tech',
-    offer: 'Договор и регламенты',
-    seeking: 'Редизайн лендинга',
-    tags: ['Legal', 'Docs'],
-    type: 'service',
-  },
-]
 
 function listingToOffer(listing) {
   const blob = `${listing.title} ${listing.description ?? ''} ${listing.offering_summary}`
@@ -48,42 +20,43 @@ function listingToOffer(listing) {
     `id${listing.id}`,
   ].slice(0, 4)
 
+  const displayName =
+    listing.author_full_name?.trim() || `Автор #${listing.author_id}`
+
   return {
     id: listing.id,
-    user: `Автор #${listing.author_id}`,
+    authorId: listing.author_id,
+    user: displayName,
     role: listing.title,
     offer: listing.offering_summary,
     seeking: listing.seeking_summary,
+    description: listing.description,
     tags,
     type: mentorship ? 'mentorship' : 'service',
   }
 }
 
 function DealsPage() {
-  const { isAuthenticated, openAuthModal } = useAuth()
+  const navigate = useNavigate()
+  const { isAuthenticated, openAuthModal, userId } = useAuth()
   const [query, setQuery] = useState('')
   const [offers, setOffers] = useState([])
-  const [fromApi, setFromApi] = useState(false)
   const [loadError, setLoadError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
+  const [interestMessage, setInterestMessage] = useState('')
+  const [interestBusy, setInterestBusy] = useState(false)
+  const [interestFeedback, setInterestFeedback] = useState(null)
 
   const load = useCallback(async () => {
     setLoadError(null)
     setLoading(true)
     try {
       const rows = await api.listings({})
-      if (rows.length) {
-        setOffers(rows.map(listingToOffer))
-        setFromApi(true)
-      } else {
-        setOffers(mockOffers)
-        setFromApi(false)
-      }
+      setOffers(rows.map(listingToOffer))
     } catch (e) {
       setLoadError(e.message)
-      setOffers(mockOffers)
-      setFromApi(false)
+      setOffers([])
     } finally {
       setLoading(false)
     }
@@ -108,6 +81,48 @@ function DealsPage() {
     )
   }, [offers, query])
 
+  const isOwnListing =
+    selected != null && userId != null && Number(selected.authorId) === Number(userId)
+
+  const closeModal = useCallback(() => {
+    setSelected(null)
+    setInterestMessage('')
+    setInterestFeedback(null)
+  }, [])
+
+  useEffect(() => {
+    if (!selected) return undefined
+    const onKey = (e) => {
+      if (e.key === 'Escape') closeModal()
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [selected, closeModal])
+
+  const submitInterest = async () => {
+    if (!selected || isOwnListing) return
+    setInterestBusy(true)
+    setInterestFeedback(null)
+    try {
+      await api.createListingInterest(selected.id, {
+        message: interestMessage.trim() || undefined,
+      })
+      setInterestFeedback({
+        type: 'ok',
+        text: 'Отклик отправлен. Автор объявления увидит его и сможет принять — тогда сделка появится в «Сообщениях».',
+      })
+      setInterestMessage('')
+    } catch (e) {
+      setInterestFeedback({ type: 'err', text: e.message })
+    } finally {
+      setInterestBusy(false)
+    }
+  }
+
   return (
     <div className="animate-page space-y-8">
       <div className="flex flex-col items-end justify-between gap-6 md:flex-row">
@@ -122,13 +137,13 @@ function DealsPage() {
             </div>
           ) : null}
           {loadError ? (
-            <p className="mt-2 text-xs text-amber-400/90">
-              API: {loadError} — показаны демо-карточки.
-            </p>
+            <p className="mt-2 text-xs text-amber-400/90">Не удалось загрузить каталог: {loadError}</p>
           ) : null}
-          {fromApi ? (
+          {!loading && !loadError ? (
             <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-600">
-              Загружено с сервера
+              {offers.length
+                ? `Загружено с сервера: ${offers.length}`
+                : 'В каталоге пока нет объявлений'}
             </p>
           ) : null}
         </div>
@@ -148,6 +163,14 @@ function DealsPage() {
         </div>
       </div>
 
+      {!loading && !loadError && filtered.length === 0 ? (
+        <p className="rounded-2xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-slate-400">
+          {offers.length === 0
+            ? 'Пока нет опубликованных заказов. Создайте объявление в профиле или зарегистрируйте тестовые данные в БД.'
+            : 'Ничего не найдено по вашему запросу.'}
+        </p>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filtered.map((offer) => (
           <button
@@ -158,6 +181,8 @@ function DealsPage() {
                 openAuthModal()
                 return
               }
+              setInterestMessage('')
+              setInterestFeedback(null)
               setSelected(offer)
             }}
             className="group relative cursor-pointer overflow-hidden rounded-[32px] border border-white/5 bg-slate-900/40 p-6 text-left transition-all duration-300 hover:-translate-y-2 hover:border-indigo-500/40 hover:bg-slate-800/60 hover:shadow-[0_15px_40px_-10px_rgba(99,102,241,0.3)]"
@@ -167,6 +192,12 @@ function DealsPage() {
             {offer.type === 'mentorship' ? (
               <div className="absolute right-0 top-0 z-10 rounded-bl-2xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 py-1.5 text-[8px] font-black uppercase tracking-widest text-white shadow-lg">
                 Менторство
+              </div>
+            ) : null}
+
+            {userId != null && Number(offer.authorId) === Number(userId) ? (
+              <div className="absolute left-0 top-0 z-10 rounded-br-2xl bg-indigo-600/90 px-3 py-1 text-[8px] font-black uppercase tracking-widest text-white">
+                Моё
               </div>
             ) : null}
 
@@ -187,9 +218,7 @@ function DealsPage() {
                 <p className="mb-1 text-[10px] font-black uppercase text-slate-500">Предлагает:</p>
                 <p className="text-sm font-bold text-white">{offer.offer}</p>
               </div>
-
               <div className="my-2 h-px w-full bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
-
               <div>
                 <p className="mb-1 text-[10px] font-black uppercase text-slate-500">Ищет:</p>
                 <p className="text-sm font-bold text-fuchsia-400">{offer.seeking}</p>
@@ -210,42 +239,22 @@ function DealsPage() {
         ))}
       </div>
 
-      {selected ? (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="deal-modal-title"
-        >
-          <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[32px] border border-white/10 bg-slate-900 p-6 shadow-2xl">
-            <button
-              type="button"
-              onClick={() => setSelected(null)}
-              className="absolute right-4 top-4 rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
-              aria-label="Закрыть"
-            >
-              <X size={20} />
-            </button>
-            <h3 id="deal-modal-title" className="pr-10 text-xl font-black text-white">
-              {selected.role}
-            </h3>
-            <p className="mt-1 text-xs text-slate-500">{selected.user}</p>
-            <div className="mt-6 space-y-4 text-sm">
-              <div>
-                <p className="text-[10px] font-black uppercase text-slate-500">Предлагает</p>
-                <p className="font-bold text-white">{selected.offer}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase text-slate-500">Ищет</p>
-                <p className="font-bold text-fuchsia-400">{selected.seeking}</p>
-              </div>
-            </div>
-            <p className="mt-6 text-xs text-slate-500">
-              Отклик и создание сделки — через профиль и API интересов к объявлению.
-            </p>
-          </div>
-        </div>
-      ) : null}
+      <DealListingModal
+        listing={selected}
+        isOwnListing={isOwnListing}
+        interestMessage={interestMessage}
+        interestBusy={interestBusy}
+        interestFeedback={interestFeedback}
+        onInterestMessageChange={setInterestMessage}
+        onSubmitInterest={submitInterest}
+        onClose={closeModal}
+        onExchangeCreated={() => navigate('/messages')}
+        onListingUpdated={(updated) => {
+          const next = listingToOffer(updated)
+          setOffers((prev) => prev.map((o) => (o.id === next.id ? next : o)))
+          setSelected((prev) => (prev?.id === next.id ? next : prev))
+        }}
+      />
     </div>
   )
 }

@@ -31,13 +31,6 @@ class Message(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
-    chat_id: Mapped[int] = mapped_column(
-        BigInteger,
-        ForeignKey("chats.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-
     exchange_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("exchanges.id", ondelete="CASCADE"),
@@ -70,8 +63,6 @@ class Message(Base):
         nullable=False,
     )
 
-    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    chat = relationship("Chat", back_populates="messages")
     sender = relationship("User", back_populates="messages")
