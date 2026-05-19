@@ -7,7 +7,7 @@ from app.models import Chat, ChatStatus
 async def create_chat(db: AsyncSession, exchange_id: int) -> Chat:
     chat = Chat(exchange_id=exchange_id)
     db.add(chat)
-    await db.commit()
+    await db.flush()
     await db.refresh(chat)
     return chat
 

@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_session
+from app.crud.chat import create_chat, get_chat_by_exchange
 from app.models.exchange import Exchange, ExchangeStatus
 from app.models.listing import Listing, ListingInterest, ListingInterestStatus
 from app.models.message import Message
@@ -50,7 +51,7 @@ class MessageOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    exchange_id: int | None
+    chat_id: int
     task_id: int | None
     sender_id: int
     content: str | None
@@ -158,9 +159,13 @@ async def accept_listing_interest(
         is_chain=False,
     )
     db.add(exchange)
-    
+
     await db.flush()
     await db.refresh(exchange)
+
+    # Автоматически создаём чат для обсуждения условий
+    await create_chat(db, exchange.id)
+
     return exchange
 
 
@@ -263,10 +268,14 @@ async def get_exchange_messages(
         raise HTTPException(status_code=404, detail="Exchange not found")
     await _require_exchange_member(db, exchange, current_user.id)
 
+    chat = await get_chat_by_exchange(db, exchange_id)
+    if chat is None:
+        return []
+
     return list(
         await db.scalars(
             select(Message)
-            .where(Message.exchange_id == exchange_id, Message.is_deleted.is_(False))
+            .where(Message.chat_id == chat.id, Message.is_deleted.is_(False))
             .order_by(Message.created_at.asc())
         )
     )
@@ -289,13 +298,19 @@ async def post_exchange_message(
     if not can_post_in_deal_chat(exchange):
         raise HTTPException(status_code=400, detail="Exchange chat is read-only for current status")
 
-    message = Message(
-        exchange_id=exchange_id,
-        sender_id=current_user.id,
-        content=payload.content.strip(),
-    )
-    if not message.content:
+    chat = await get_chat_by_exchange(db, exchange_id)
+    if chat is None:
+        chat = await create_chat(db, exchange_id)
+
+    content = payload.content.strip()
+    if not content:
         raise HTTPException(status_code=400, detail="Message content cannot be empty")
+
+    message = Message(
+        chat_id=chat.id,
+        sender_id=current_user.id,
+        content=content,
+    )
     db.add(message)
     current_user.last_active_at = datetime.now(UTC)
     await db.flush()

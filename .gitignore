@@ -74,6 +74,12 @@ logs/
 docker-compose.override.yml
 backend/.venv/
 
+# Secrets (production) — никогда не коммитить!
+secrets/*.txt
+secrets/*.key
+secrets/*.pem
+!secrets/README.md
+
 # React / Frontend
 node_modules/
 dist/

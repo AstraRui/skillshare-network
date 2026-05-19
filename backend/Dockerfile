@@ -1,27 +1,37 @@
-FROM python:3.12-slim
+# ── Stage 1: builder ──────────────────────────────────────────────────────────
+FROM python:3.12-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install uv (fast dependency manager)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Копируем lock-файл для воспроизводимой сборки
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
+# ── Stage 2: runtime ──────────────────────────────────────────────────────────
+FROM python:3.12-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:${PATH}"
+
+WORKDIR /app
+
+# Копируем только venv из builder — без uv, curl и прочего мусора
+COPY --from=builder /app/.venv /app/.venv
+
 COPY app ./app
 COPY alembic ./alembic
-COPY alembic.ini ./alembic.ini
-COPY gunicorn_conf.py ./gunicorn_conf.py
+COPY alembic.ini gunicorn_conf.py entrypoint.sh ./
 
 EXPOSE 8000
 
-CMD [".venv/bin/gunicorn", "-c", "gunicorn_conf.py", "app.main:app"]
-
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["gunicorn", "-c", "gunicorn_conf.py", "app.main:app"]
