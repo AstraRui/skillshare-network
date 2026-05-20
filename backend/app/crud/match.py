@@ -3,14 +3,14 @@ from __future__ import annotations
 import math
 from datetime import UTC, datetime
 
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models import Exchange, ExchangeStatus, ListingInterest, ListingInterestStatus
 from app.models.review import Review
+from app.models.skill import Skill, UserSkillsOffered, UserSkillsWanted
 from app.models.user import User
-from app.models.skill import UserSkillsWanted, UserSkillsOffered, Skill
 from app.schemas.match import MatchResult, ScoreBreakdown, SkillMatch
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func, select
 
 
 async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
@@ -301,7 +301,7 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
     category_counts: dict[int | None, int] = {}
     final: list[MatchResult] = []
 
-    for final_score, category_id, result in scored:
+    for _final_score, category_id, result in scored:
         cnt = category_counts.get(category_id, 0)
         if cnt < 2:
             final.append(result)
