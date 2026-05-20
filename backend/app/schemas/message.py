@@ -12,7 +12,7 @@ class MessageRead(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    exchange_id: int | None
+    chat_id: int | None
     task_id: int | None
     sender_id: int
     content: str | None

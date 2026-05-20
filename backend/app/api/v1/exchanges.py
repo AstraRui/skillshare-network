@@ -350,7 +350,7 @@ async def get_exchange_messages(
 
     chat = await get_chat_by_exchange(db, exchange_id)
     if chat is None:
-        return []
+        chat = await create_chat(db, exchange_id)
 
     return list(
         await db.scalars(

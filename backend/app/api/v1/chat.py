@@ -33,11 +33,11 @@ async def list_messages(exchange_id: int, db: DB):
 
 @router.patch("/exchanges/{exchange_id}/messages/{message_id}", response_model=MessageRead)
 async def edit_message(exchange_id: int, message_id: int, body: MessageUpdate, db: DB):
+    chat = await chat_crud.get_chat_by_exchange(db, exchange_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Чат не найден")
     result = await db.execute(
-        select(Message).where(
-            Message.exchange_id == exchange_id,
-            Message.id == message_id,
-        )
+        select(Message).where(Message.chat_id == chat.id, Message.id == message_id)
     )
     msg = result.scalar_one_or_none()
     if not msg:
@@ -47,11 +47,11 @@ async def edit_message(exchange_id: int, message_id: int, body: MessageUpdate, d
 
 @router.delete("/exchanges/{exchange_id}/messages/{message_id}", response_model=MessageRead)
 async def delete_message(exchange_id: int, message_id: int, db: DB):
+    chat = await chat_crud.get_chat_by_exchange(db, exchange_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Чат не найден")
     result = await db.execute(
-        select(Message).where(
-            Message.exchange_id == exchange_id,
-            Message.id == message_id,
-        )
+        select(Message).where(Message.chat_id == chat.id, Message.id == message_id)
     )
     msg = result.scalar_one_or_none()
     if not msg:

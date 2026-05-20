@@ -31,3 +31,4 @@ class Chat(Base):
     )
 
     exchange = relationship("Exchange", back_populates="chat")
+    messages = relationship("Message", back_populates="chat", cascade="all, delete-orphan")
