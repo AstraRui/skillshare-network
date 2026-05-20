@@ -19,6 +19,6 @@ async def get_chat_by_exchange(db: AsyncSession, exchange_id: int) -> Chat | Non
 
 async def close_chat(db: AsyncSession, chat: Chat) -> Chat:
     chat.status = ChatStatus.closed
-    await db.commit()
+    await db.flush()
     await db.refresh(chat)
     return chat

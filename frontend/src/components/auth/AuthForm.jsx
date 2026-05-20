@@ -39,9 +39,9 @@ function AuthForm({ onAuthenticated, className = '' }) {
         password,
         full_name: fullName.trim() || undefined,
       })
-      setFormOk('Аккаунт создан. Теперь войдите.')
-      setMode('login')
-      setPassword('')
+      // register() в AuthContext сам логинит и ставит justRegistered=true
+      // AuthModal поймает это и сделает редирект на /profile
+      onAuthenticated?.()
     } catch (err) {
       setFormError(err.message || 'Ошибка регистрации')
     }

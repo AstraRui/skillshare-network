@@ -2,20 +2,24 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.params import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_user
 from app.crud import chat as chat_crud
 from app.crud import message as message_crud
-from app.db.session import get_db_session
+from app.db.session import SessionLocal, get_db_session
 from app.models import Message
+from app.models.user import User
 from app.schemas.chat import ChatRead
-from app.schemas.message import MessageRead, MessageUpdate
+from app.schemas.message import MessageCreate, MessageRead, MessageUpdate
+from app.ws.manager import manager
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 DB = Annotated[AsyncSession, Depends(get_db_session)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.get("/exchanges/{exchange_id}", response_model=ChatRead)
@@ -31,11 +35,56 @@ async def list_messages(chat_id: int, db: DB):
     return await message_crud.get_messages(db, chat_id)
 
 
-# Доделать после слива с авторизацией
-# @router.post("/{chat_id}/messages", response_model=ChatRead, status_code=201)
-# async def send_message(chat_id: int, body: MessageCreate, db: DB):
-#
-#
+@router.post("/{chat_id}/messages", response_model=MessageRead, status_code=201)
+async def send_message(chat_id: int, body: MessageCreate, db: DB, current_user: CurrentUser):
+    chat = await chat_crud.get_chat_by_exchange(db, chat_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Чат не найден")
+    msg = await message_crud.create_message(
+        db,
+        chat_id=chat.id,
+        sender_id=current_user.id,
+        content=body.content,
+        media_url=body.media_url,
+    )
+    # Рассылаем новое сообщение всем подключённым по WS
+    await manager.broadcast(
+        chat.id,
+        {
+            "id": msg.id,
+            "chat_id": msg.chat_id,
+            "sender_id": msg.sender_id,
+            "content": msg.content,
+            "media_url": msg.media_url,
+            "created_at": msg.created_at.isoformat(),
+            "edited_at": msg.edited_at.isoformat() if msg.edited_at else None,
+            "is_deleted": msg.is_deleted,
+        },
+    )
+    return msg
+
+
+@router.websocket("/{chat_id}/ws")
+async def chat_websocket(chat_id: int, websocket: WebSocket, user_id: int):
+    """
+    WebSocket-эндпоинт для real-time чата.
+    Подключение: ws://host/api/v1/chat/{chat_id}/ws?user_id=<id>
+    """
+    # Проверяем что чат существует
+    async with SessionLocal() as db:
+        chat = await chat_crud.get_chat_by_exchange(db, chat_id)
+        if not chat:
+            await websocket.close(code=4004)
+            return
+        real_chat_id = chat.id
+
+    await manager.connect(real_chat_id, websocket)
+    try:
+        # Держим соединение открытым, слушаем пинги/служебные сообщения от клиента
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(real_chat_id, websocket)
 
 
 @router.patch("/{chat_id}/messages/{message_id}", response_model=MessageRead)

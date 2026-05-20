@@ -1,16 +1,27 @@
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { X, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import AuthForm from './AuthForm.jsx'
 
 function AuthModal() {
-  const { authModalOpen, closeAuthModal, isAuthenticated } = useAuth()
+  const { authModalOpen, closeAuthModal, isAuthenticated, justRegistered, clearJustRegistered } =
+    useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (isAuthenticated && authModalOpen) {
       closeAuthModal()
     }
   }, [isAuthenticated, authModalOpen, closeAuthModal])
+
+  // После регистрации — редирект на профиль для онбординга
+  useEffect(() => {
+    if (justRegistered) {
+      clearJustRegistered()
+      navigate('/profile')
+    }
+  }, [justRegistered, clearJustRegistered, navigate])
 
   if (!authModalOpen) return null
 
@@ -39,7 +50,10 @@ function AuthModal() {
           <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 p-2">
             <Zap className="size-5 fill-white text-white" strokeWidth={2.5} aria-hidden />
           </div>
-          <h2 id="auth-modal-title" className="text-lg font-black uppercase tracking-tight text-white">
+          <h2
+            id="auth-modal-title"
+            className="text-lg font-black uppercase tracking-tight text-white"
+          >
             SkillShare
           </h2>
         </div>

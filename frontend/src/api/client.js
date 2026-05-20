@@ -41,6 +41,8 @@ export async function request(path, options = {}) {
 
 export const api = {
   health: () => request('/health'),
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
   login: (email, password) =>
     request('/auth/login', {
       method: 'POST',
@@ -49,15 +51,19 @@ export const api = {
     }),
   register: (payload) =>
     request('/auth/register', { method: 'POST', body: payload, skipAuth: true }),
-  myExchanges: () => request('/exchanges'),
-  exchangeMessages: (exchangeId) => request(`/exchanges/${exchangeId}/messages`),
-  postExchangeMessage: (exchangeId, content) =>
-    request(`/exchanges/${exchangeId}/messages`, {
-      method: 'POST',
-      body: { content },
-    }),
-  confirmExchangeCompletion: (exchangeId) =>
-    request(`/exchanges/${exchangeId}/confirm-completion`, { method: 'POST' }),
+
+  // ── Users ─────────────────────────────────────────────────────────────────
+  getMe: () => request('/users/me'),
+  updateMe: (payload) => request('/users/me', { method: 'PATCH', body: payload }),
+  getMySkills: () => request('/users/me/skills'),
+  updateMySkills: (payload) => request('/users/me/skills', { method: 'PUT', body: payload }),
+
+  // ── Skills ────────────────────────────────────────────────────────────────
+  skills: () => request('/skills'),
+  skillCategories: () => request('/skills/categories'),
+  createSkill: (name) => request('/skills', { method: 'POST', body: { name } }),
+
+  // ── Listings ──────────────────────────────────────────────────────────────
   listings: (params = {}) => {
     const q = new URLSearchParams()
     for (const [k, v] of Object.entries(params)) {
@@ -66,4 +72,29 @@ export const api = {
     const s = q.toString()
     return request(s ? `/listings?${s}` : '/listings')
   },
+  createListing: (payload) => request('/listings', { method: 'POST', body: payload }),
+  respondToListing: (listingId, message = null) =>
+    request(`/listings/${listingId}/interests`, { method: 'POST', body: { message } }),
+  listingInterests: (listingId) => request(`/listings/${listingId}/interests`),
+
+  // ── Exchanges ─────────────────────────────────────────────────────────────
+  myExchanges: () => request('/exchanges'),
+  acceptInterest: (listingId, responderId) =>
+    request(`/exchanges/listing/${listingId}/accept-interest`, {
+      method: 'POST',
+      body: { responder_id: responderId },
+    }),
+  confirmExchangeCompletion: (exchangeId) =>
+    request(`/exchanges/${exchangeId}/confirm-completion`, { method: 'POST' }),
+
+  // ── Chat ──────────────────────────────────────────────────────────────────
+  // Сообщения чата идут через /exchanges/{id}/messages (exchange_id, не chat_id)
+  chatMessages: (exchangeId) => request(`/exchanges/${exchangeId}/messages`),
+  sendChatMessage: (exchangeId, content) =>
+    request(`/exchanges/${exchangeId}/messages`, { method: 'POST', body: { content } }),
+  // Получить chat_id по exchange_id (нужен для WebSocket)
+  getChatByExchange: (exchangeId) => request(`/chat/exchanges/${exchangeId}`),
+
+  // ── Matches ───────────────────────────────────────────────────────────────
+  matches: () => request('/matches'),
 }

@@ -35,3 +35,42 @@ class TokenResponse(BaseModel):
     # Bearer — это тип токена в стандарте OAuth2.
     # Означает "предъявитель" — кто предъявил токен, тот и авторизован.
     token_type: str = "bearer"
+
+
+class UserProfile(BaseModel):
+    """Полный профиль текущего пользователя."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    full_name: str | None
+    avatar_url: str | None
+    rating: float
+    role: str
+    # Профиль считается заполненным если есть имя и хотя бы один навык
+    # Это поле вычисляется на фронте на основе full_name и навыков
+
+
+class UserUpdate(BaseModel):
+    """Поля которые пользователь может изменить сам."""
+
+    full_name: str | None = None
+    avatar_url: str | None = None
+
+
+class UserSkillOffered(BaseModel):
+    skill_id: int
+    level: int  # 1-3
+
+
+class UserSkillWanted(BaseModel):
+    skill_id: int
+    desired_level: int  # 1-3
+
+
+class UserSkillsPayload(BaseModel):
+    """Полная замена навыков пользователя."""
+
+    offered: list[UserSkillOffered] = []
+    wanted: list[UserSkillWanted] = []

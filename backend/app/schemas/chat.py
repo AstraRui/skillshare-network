@@ -7,7 +7,7 @@ from app.schemas.message import MessageRead
 
 
 class ChatRead(BaseModel):
-    model_config = {"from attributes": True}
+    model_config = {"from_attributes": True}
 
     id: int
     exchange_id: int

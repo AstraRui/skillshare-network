@@ -18,9 +18,12 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY))
   const [authModalOpen, setAuthModalOpen] = useState(false)
+  // true сразу после регистрации — сигнал для редиректа на онбординг
+  const [justRegistered, setJustRegistered] = useState(false)
 
   const openAuthModal = useCallback(() => setAuthModalOpen(true), [])
   const closeAuthModal = useCallback(() => setAuthModalOpen(false), [])
+  const clearJustRegistered = useCallback(() => setJustRegistered(false), [])
 
   const userId = useMemo(() => (token ? jwtUserId(token) : null), [token])
 
@@ -38,14 +41,18 @@ export function AuthProvider({ children }) {
   }, [])
 
   const register = useCallback(async ({ email: regEmail, password, full_name }) => {
-    return api.register({ email: regEmail, password, full_name: full_name || null })
-  }, [])
+    await api.register({ email: regEmail, password, full_name: full_name || null })
+    // Сразу логиним — не гоняем пользователя на форму входа
+    await login(regEmail, password)
+    setJustRegistered(true)
+  }, [login])
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(EMAIL_KEY)
     setToken(null)
     setEmail(null)
+    setJustRegistered(false)
   }, [])
 
   const value = useMemo(
@@ -55,6 +62,8 @@ export function AuthProvider({ children }) {
       email,
       userInitials,
       isAuthenticated: Boolean(token && userId != null),
+      justRegistered,
+      clearJustRegistered,
       login,
       register,
       logout,
@@ -67,6 +76,8 @@ export function AuthProvider({ children }) {
       userId,
       email,
       userInitials,
+      justRegistered,
+      clearJustRegistered,
       login,
       register,
       logout,

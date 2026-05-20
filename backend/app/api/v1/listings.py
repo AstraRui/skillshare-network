@@ -4,7 +4,6 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Select, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,45 +11,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, get_db_session
 from app.models.listing import Listing, ListingInterest, ListingInterestStatus, ListingStatus
 from app.models.user import User
+from app.schemas.listing import (
+    ListingCreate,
+    ListingInterestCreate,
+    ListingInterestOut,
+    ListingOut,
+)
 
 router = APIRouter(prefix="/listings", tags=["listings"])
-
-
-class ListingCreate(BaseModel):
-    title: str
-    description: str | None = None
-    offering_summary: str
-    seeking_summary: str
-    status: ListingStatus = ListingStatus.published
-
-
-class ListingOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    author_id: int
-    title: str
-    description: str | None
-    offering_summary: str
-    seeking_summary: str
-    status: ListingStatus
-    created_at: datetime
-
-
-class ListingInterestCreate(BaseModel):
-    message: str | None = None
-
-
-class ListingInterestOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    listing_id: int
-    responder_id: int
-    message: str | None
-    status: ListingInterestStatus
-    created_at: datetime
-
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -88,6 +56,28 @@ async def get_listings(
         stmt = stmt.where(Listing.author_id == author_id)
     stmt = stmt.order_by(Listing.created_at.desc())
     return list(await db.scalars(stmt))
+
+
+@router.get(
+    "/{listing_id}/interests",
+    response_model=list[ListingInterestOut],
+)
+async def get_listing_interests(
+    listing_id: int,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> list[ListingInterest]:
+    listing = await db.get(Listing, listing_id)
+    if listing is None:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only listing author can view interests")
+    result = await db.scalars(
+        select(ListingInterest)
+        .where(ListingInterest.listing_id == listing_id)
+        .order_by(ListingInterest.created_at.desc())
+    )
+    return list(result)
 
 
 @router.post(

@@ -4,7 +4,6 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Select, and_, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,62 +16,17 @@ from app.models.message import Message
 from app.models.review import Review
 from app.models.user import User
 from app.policies.exchange_messaging import can_post_in_deal_chat
+from app.schemas.exchange import (
+    AcceptInterestRequest,
+    ExchangeOut,
+    ExchangeStatusUpdate,
+    MessageCreate,
+    MessageOut,
+    ReviewCreate,
+    ReviewOut,
+)
 
 router = APIRouter(prefix="/exchanges", tags=["exchanges"])
-
-
-class AcceptInterestRequest(BaseModel):
-    responder_id: int
-
-
-class ExchangeOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    initiator_id: int
-    listing_id: int | None
-    status: ExchangeStatus
-    is_chain: bool
-    created_at: datetime
-    completed_at: datetime | None
-    completed_by_initiator: bool
-    completed_by_partner: bool
-
-
-class ExchangeStatusUpdate(BaseModel):
-    to: ExchangeStatus
-
-
-class MessageCreate(BaseModel):
-    content: str
-
-
-class MessageOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    chat_id: int
-    task_id: int | None
-    sender_id: int
-    content: str | None
-    created_at: datetime
-
-
-class ReviewCreate(BaseModel):
-    rating: int
-    comment: str | None = None
-
-
-class ReviewOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    exchange_id: int
-    reviewer_id: int
-    reviewed_id: int
-    rating: int
-    comment: str | None
-
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -159,13 +113,9 @@ async def accept_listing_interest(
         is_chain=False,
     )
     db.add(exchange)
-
     await db.flush()
     await db.refresh(exchange)
-
-    # Автоматически создаём чат для обсуждения условий
     await create_chat(db, exchange.id)
-
     return exchange
 
 
