@@ -10,14 +10,14 @@ import {
   getAdminListings,
   getAdminUsers,
   updateAdminUserStatus,
-} from '../features/admin/api/adminApi.js'
+} from '../../../adminApi.js'
 
-import AdminUsersTable from '../features/admin/components/AdminUsersTable.jsx'
-import AdminListingsTable from '../features/admin/components/AdminListingsTable.jsx'
-import AdminExchangesTable from '../features/admin/components/AdminExchangesTable.jsx'
-import AdminChatsTable from '../features/admin/components/AdminChatsTable.jsx'
-import AdminMessagesList from '../features/admin/components/AdminMessagesList.jsx'
-import AdminTokenCard from '../features/admin/components/AdminTokenCard.jsx'
+import AdminUsersTable from '../../../AdminUsersTable.jsx'
+import AdminListingsTable from '../../../AdminListingsTable.jsx'
+import AdminExchangesTable from '../../../AdminExchangesTable.jsx'
+import AdminChatsTable from '../../../AdminChatsTable.jsx'
+import AdminMessagesList from '../../../AdminMessagesList.jsx'
+import AdminTokenCard from '../../../AdminTokenCard.jsx'
 
 function AdminPanelPage() {
   const [token, setToken] = useState('')
