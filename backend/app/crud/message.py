@@ -1,24 +1,31 @@
-from datetime import UTC, datetime
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Message
 
 
-async def get_messages(db: AsyncSession, chat_id: int) -> list[Message]:
+async def get_messages_by_exchange(db: AsyncSession, exchange_id: int) -> list[Message]:
     result = await db.execute(
         select(Message)
-        .where(Message.chat_id == chat_id, ~Message.is_deleted)
+        .where(Message.exchange_id == exchange_id, Message.is_deleted.is_(False))
         .order_by(Message.created_at)
     )
     return list(result.scalars().all())
 
 
-async def create_message(
-    db: AsyncSession, chat_id: int, sender_id: int, content: str | None, media_url: str | None
+async def create_exchange_message(
+    db: AsyncSession,
+    exchange_id: int,
+    sender_id: int,
+    content: str | None,
+    media_url: str | None = None,
 ) -> Message:
-    msg = Message(chat_id=chat_id, sender_id=sender_id, content=content, media_url=media_url)
+    msg = Message(
+        exchange_id=exchange_id,
+        sender_id=sender_id,
+        content=content,
+        media_url=media_url,
+    )
     db.add(msg)
     await db.commit()
     await db.refresh(msg)
@@ -27,7 +34,6 @@ async def create_message(
 
 async def edit_message(db: AsyncSession, message: Message, content: str) -> Message:
     message.content = content
-    message.edited_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(message)
     return message

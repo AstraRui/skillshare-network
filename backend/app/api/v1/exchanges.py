@@ -39,6 +39,12 @@ class ExchangeOut(BaseModel):
     completed_by_partner: bool
 
 
+class ExchangeListOut(ExchangeOut):
+    listing_title: str | None = None
+    partner_id: int | None = None
+    partner_full_name: str | None = None
+
+
 class ExchangeStatusUpdate(BaseModel):
     to: ExchangeStatus
 
@@ -169,8 +175,31 @@ async def accept_listing_interest(
     return exchange
 
 
-@router.get("", response_model=list[ExchangeOut])
-async def get_my_exchanges(db: DbSession, current_user: CurrentUser) -> list[Exchange]:
+def _exchange_list_out(
+    exchange: Exchange,
+    *,
+    listing_title: str | None,
+    partner_id: int | None,
+    partner_full_name: str | None,
+) -> ExchangeListOut:
+    return ExchangeListOut(
+        id=exchange.id,
+        initiator_id=exchange.initiator_id,
+        listing_id=exchange.listing_id,
+        status=exchange.status,
+        is_chain=exchange.is_chain,
+        created_at=exchange.created_at,
+        completed_at=exchange.completed_at,
+        completed_by_initiator=exchange.completed_by_initiator,
+        completed_by_partner=exchange.completed_by_partner,
+        listing_title=listing_title,
+        partner_id=partner_id,
+        partner_full_name=partner_full_name,
+    )
+
+
+@router.get("", response_model=list[ExchangeListOut])
+async def get_my_exchanges(db: DbSession, current_user: CurrentUser) -> list[ExchangeListOut]:
     stmt: Select[tuple[Exchange]] = (
         select(Exchange)
         .outerjoin(
@@ -188,7 +217,58 @@ async def get_my_exchanges(db: DbSession, current_user: CurrentUser) -> list[Exc
         )
         .order_by(Exchange.created_at.desc())
     )
-    return list(await db.scalars(stmt))
+    exchanges = list(await db.scalars(stmt))
+    if not exchanges:
+        return []
+
+    listing_ids = {ex.listing_id for ex in exchanges if ex.listing_id is not None}
+    listing_titles: dict[int, str] = {}
+    responders_by_listing: dict[int, int] = {}
+    if listing_ids:
+        listing_rows = await db.execute(
+            select(Listing.id, Listing.title).where(Listing.id.in_(listing_ids))
+        )
+        listing_titles = {row.id: row.title for row in listing_rows.all()}
+
+        interest_rows = await db.execute(
+            select(ListingInterest.listing_id, ListingInterest.responder_id).where(
+                ListingInterest.listing_id.in_(listing_ids),
+                ListingInterest.status == ListingInterestStatus.accepted,
+            )
+        )
+        responders_by_listing = {row.listing_id: row.responder_id for row in interest_rows.all()}
+
+    partner_ids: set[int] = set()
+    for ex in exchanges:
+        if ex.initiator_id == current_user.id:
+            pid = responders_by_listing.get(ex.listing_id) if ex.listing_id else None
+        else:
+            pid = ex.initiator_id
+        if pid is not None:
+            partner_ids.add(pid)
+
+    names_by_id: dict[int, str | None] = {}
+    if partner_ids:
+        name_rows = await db.execute(
+            select(User.id, User.full_name).where(User.id.in_(partner_ids))
+        )
+        names_by_id = {row.id: row.full_name for row in name_rows.all()}
+
+    result: list[ExchangeListOut] = []
+    for ex in exchanges:
+        if ex.initiator_id == current_user.id:
+            partner_id = responders_by_listing.get(ex.listing_id) if ex.listing_id else None
+        else:
+            partner_id = ex.initiator_id
+        result.append(
+            _exchange_list_out(
+                ex,
+                listing_title=listing_titles.get(ex.listing_id) if ex.listing_id else None,
+                partner_id=partner_id,
+                partner_full_name=names_by_id.get(partner_id) if partner_id else None,
+            )
+        )
+    return result
 
 
 @router.post("/{exchange_id}/status", response_model=ExchangeOut)
@@ -316,6 +396,26 @@ async def post_exchange_message(
     await db.flush()
     await db.refresh(message)
     return message
+
+
+@router.get("/{exchange_id}/reviews/mine", response_model=ReviewOut | None)
+async def get_my_exchange_review(
+    exchange_id: int,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> Review | None:
+    exchange = await db.get(Exchange, exchange_id)
+    if exchange is None:
+        raise HTTPException(status_code=404, detail="Exchange not found")
+    await _require_exchange_member(db, exchange, current_user.id)
+
+    return await db.scalar(
+        select(Review).where(
+            Review.exchange_id == exchange_id,
+            Review.reviewer_id == current_user.id,
+            Review.is_deleted.is_(False),
+        )
+    )
 
 
 @router.post(
