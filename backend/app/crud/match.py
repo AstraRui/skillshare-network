@@ -15,16 +15,22 @@ from app.schemas.match import MatchResult, ScoreBreakdown, SkillMatch
 
 async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
     # Навыки текущего пользователя
-    my_offered_rows = list(await db.execute(
-        select(UserSkillsOffered.skill_id, UserSkillsOffered.level)
-        .where(UserSkillsOffered.user_id == user_id)
-    ))
+    my_offered_rows = list(
+        await db.execute(
+            select(UserSkillsOffered.skill_id, UserSkillsOffered.level).where(
+                UserSkillsOffered.user_id == user_id
+            )
+        )
+    )
     my_offered: dict[int, int] = {r.skill_id: r.level for r in my_offered_rows}
 
-    my_wanted_rows = list(await db.execute(
-        select(UserSkillsWanted.skill_id, UserSkillsWanted.desired_level)
-        .where(UserSkillsWanted.user_id == user_id)
-    ))
+    my_wanted_rows = list(
+        await db.execute(
+            select(UserSkillsWanted.skill_id, UserSkillsWanted.desired_level).where(
+                UserSkillsWanted.user_id == user_id
+            )
+        )
+    )
     my_wanted: dict[int, int] = {r.skill_id: r.desired_level for r in my_wanted_rows}
 
     if not my_wanted:
@@ -66,37 +72,37 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
         )
         conditions.append(wants_what_i_offer)
 
-    candidates: list[User] = list(await db.scalars(
-        select(User).where(*conditions)
-    ))
+    candidates: list[User] = list(await db.scalars(select(User).where(*conditions)))
     if not candidates:
         return []
 
     candidate_ids = [c.id for c in candidates]
 
     # Пакетная загрузка навыков кандидатов
-    c_offered_rows = list(await db.execute(
-        select(
-            UserSkillsOffered.user_id,
-            UserSkillsOffered.skill_id,
-            UserSkillsOffered.level,
+    c_offered_rows = list(
+        await db.execute(
+            select(
+                UserSkillsOffered.user_id,
+                UserSkillsOffered.skill_id,
+                UserSkillsOffered.level,
+            ).where(UserSkillsOffered.user_id.in_(candidate_ids))
         )
-        .where(UserSkillsOffered.user_id.in_(candidate_ids))
-    ))
+    )
     candidate_offers: dict[int, dict[int, int]] = {}
     for r in c_offered_rows:
         if r.user_id not in candidate_offers:
             candidate_offers[r.user_id] = {}
         candidate_offers[r.user_id][r.skill_id] = r.level
 
-    c_wanted_rows = list(await db.execute(
-        select(
-            UserSkillsWanted.user_id,
-            UserSkillsWanted.skill_id,
-            UserSkillsWanted.desired_level,
+    c_wanted_rows = list(
+        await db.execute(
+            select(
+                UserSkillsWanted.user_id,
+                UserSkillsWanted.skill_id,
+                UserSkillsWanted.desired_level,
+            ).where(UserSkillsWanted.user_id.in_(candidate_ids))
         )
-        .where(UserSkillsWanted.user_id.in_(candidate_ids))
-    ))
+    )
     candidate_wanted: dict[int, dict[int, int]] = {}
     for r in c_wanted_rows:
         if r.user_id not in candidate_wanted:
@@ -110,22 +116,24 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
         | {r.skill_id for r in c_offered_rows}
         | {r.skill_id for r in c_wanted_rows}
     )
-    skill_name_rows = list(await db.execute(
-        select(Skill.id, Skill.name, Skill.category_id)
-        .where(Skill.id.in_(all_skill_ids))
-    ))
+    skill_name_rows = list(
+        await db.execute(
+            select(Skill.id, Skill.name, Skill.category_id).where(Skill.id.in_(all_skill_ids))
+        )
+    )
     skill_names: dict[int, str] = {r.id: r.name for r in skill_name_rows}
     skill_categories_id: dict[int, int] = {r.id: r.category_id for r in skill_name_rows}
 
     # Отзывы кандидатов
-    review_rows = list(await db.execute(
-        select(Review.reviewed_id, Review.rating)
-        .where(
-            Review.reviewed_id.in_(candidate_ids),
-            Review.is_deleted.is_(False),
-            Review.is_hidden.is_(False),
+    review_rows = list(
+        await db.execute(
+            select(Review.reviewed_id, Review.rating).where(
+                Review.reviewed_id.in_(candidate_ids),
+                Review.is_deleted.is_(False),
+                Review.is_hidden.is_(False),
+            )
         )
-    ))
+    )
     candidate_reviews: dict[int, list[int]] = {}
     for r in review_rows:
         if r.reviewed_id not in candidate_reviews:
@@ -133,28 +141,32 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
         candidate_reviews[r.reviewed_id].append(r.rating)
 
     # Количество завершённых обменов (инициатор + участник)
-    initiator_rows = list(await db.execute(
-        select(Exchange.initiator_id, func.count().label("cnt"))
-        .where(
-            Exchange.initiator_id.in_(candidate_ids),
-            Exchange.status == ExchangeStatus.completed,
-            Exchange.is_deleted.is_(False),
+    initiator_rows = list(
+        await db.execute(
+            select(Exchange.initiator_id, func.count().label("cnt"))
+            .where(
+                Exchange.initiator_id.in_(candidate_ids),
+                Exchange.status == ExchangeStatus.completed,
+                Exchange.is_deleted.is_(False),
+            )
+            .group_by(Exchange.initiator_id)
         )
-        .group_by(Exchange.initiator_id)
-    ))
+    )
     exchange_counts: dict[int, int] = {r.initiator_id: r.cnt for r in initiator_rows}
 
-    participant_rows = list(await db.execute(
-        select(ListingInterest.responder_id, func.count().label("cnt"))
-        .join(Exchange, Exchange.listing_id == ListingInterest.listing_id)
-        .where(
-            ListingInterest.responder_id.in_(candidate_ids),
-            ListingInterest.status == ListingInterestStatus.accepted,
-            Exchange.status == ExchangeStatus.completed,
-            Exchange.is_deleted.is_(False),
+    participant_rows = list(
+        await db.execute(
+            select(ListingInterest.responder_id, func.count().label("cnt"))
+            .join(Exchange, Exchange.listing_id == ListingInterest.listing_id)
+            .where(
+                ListingInterest.responder_id.in_(candidate_ids),
+                ListingInterest.status == ListingInterestStatus.accepted,
+                Exchange.status == ExchangeStatus.completed,
+                Exchange.is_deleted.is_(False),
+            )
+            .group_by(ListingInterest.responder_id)
         )
-        .group_by(ListingInterest.responder_id)
-    ))
+    )
     for r in participant_rows:
         exchange_counts[r.responder_id] = exchange_counts.get(r.responder_id, 0) + r.cnt
 
@@ -186,9 +198,7 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
         # S_уровень
         level_scores: list[float] = []
         for skill_id in matched_for_me:
-            level_scores.append(
-                1.0 - abs(c_offered[skill_id] - my_wanted[skill_id]) / 3.0
-            )
+            level_scores.append(1.0 - abs(c_offered[skill_id] - my_wanted[skill_id]) / 3.0)
         s_level = sum(level_scores) / len(level_scores) if level_scores else 0.0
 
         # S_активность
@@ -223,12 +233,7 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
 
             s_reputation = 0.4 * rating_norm + 0.3 * exp_norm + 0.3 * pos_share
 
-        core_score = (
-            s_skills ** 1.4
-            * s_level ** 0.9
-            * s_activity ** 0.5
-            * s_reputation ** 0.8
-        )
+        core_score = s_skills**1.4 * s_level**0.9 * s_activity**0.5 * s_reputation**0.8
 
         exp_count = exchange_counts.get(cid, 0)
         final_score = core_score

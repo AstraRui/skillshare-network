@@ -54,9 +54,7 @@ async def _count_exchanges(db: AsyncSession, user_id: int) -> int:
 
 
 async def _count_listings(db: AsyncSession, user_id: int) -> int:
-    count = await db.scalar(
-        select(func.count(Listing.id)).where(Listing.author_id == user_id)
-    )
+    count = await db.scalar(select(func.count(Listing.id)).where(Listing.author_id == user_id))
     return int(count or 0)
 
 

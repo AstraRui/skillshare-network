@@ -164,7 +164,7 @@ async def accept_listing_interest(
         is_chain=False,
     )
     db.add(exchange)
-    
+
     await db.flush()
     await db.refresh(exchange)
     return exchange
@@ -231,9 +231,7 @@ async def get_my_exchanges(db: DbSession, current_user: CurrentUser) -> list[Exc
                 ListingInterest.status == ListingInterestStatus.accepted,
             )
         )
-        responders_by_listing = {
-            row.listing_id: row.responder_id for row in interest_rows.all()
-        }
+        responders_by_listing = {row.listing_id: row.responder_id for row in interest_rows.all()}
 
     partner_ids: set[int] = set()
     for ex in exchanges:

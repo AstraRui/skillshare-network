@@ -40,7 +40,9 @@ async def get_or_create_skill(db: AsyncSession, name: str) -> Skill:
     return skill
 
 
-async def load_user_skills(db: AsyncSession, user_id: int) -> tuple[list[tuple[int, str, int]], list[tuple[int, str, int]]]:
+async def load_user_skills(
+    db: AsyncSession, user_id: int
+) -> tuple[list[tuple[int, str, int]], list[tuple[int, str, int]]]:
     offered_rows = (
         await db.execute(
             select(Skill.id, Skill.name, UserSkillsOffered.level)
