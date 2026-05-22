@@ -53,6 +53,12 @@ services:
     volumes:
       - ./backend:/app          # hot-reload
       - backend_venv:/app/.venv # сохраняем .venv из образа, не перезаписываем
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')\""]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
@@ -74,7 +80,8 @@ services:
       VITE_PROXY_TARGET: http://backend:8000
       CHOKIDAR_USEPOLLING: "true"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   pg_data:
