@@ -16,7 +16,7 @@
 | --- | --- | --- |
 | Backend | Python 3.12 + FastAPI | Максимальная скорость, асинхронность, мощная типизация (Pydantic) |
 | Linter / Formatter | Ruff | Заменяет Flake8, Black и Isort. Молниеносная проверка кода |
-| Frontend (Engine) | Jinja2 + HTMX | No-JS подход: логика на бэкенде, динамика через HTML-атрибуты |
+| Frontend (Engine) | React + Vite |Современный SPA, компонентный подход, быстрая сборка через Vite |
 | UI-компоненты | TailwindCSS + FlyonUI | Профессиональный UI на чистом HTML/CSS, без Node.js рантайма |
 | Client Logic | Alpine.js | Минималистичный JS (как Vue, но в HTML) для простых UI-эффектов |
 | ORM | SQLAlchemy 2.0 + Alembic | Работа со сложным SQL и рекурсиями для матчинга цепочек |
