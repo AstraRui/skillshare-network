@@ -28,12 +28,8 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
   const [step, setStep] = useState(profile?.full_name ? 'skills' : 'name')
 
   // Навыки: [{skill_id, skill_name, level}]
-  const [offered, setOffered] = useState(() =>
-    (mySkills?.offered ?? []).map(s => ({ ...s, skill_name: '' }))
-  )
-  const [wanted, setWanted] = useState(() =>
-    (mySkills?.wanted ?? []).map(s => ({ ...s, skill_name: '', desired_level: s.desired_level }))
-  )
+  const [offered, setOffered] = useState(() => mySkills?.offered ?? [])
+  const [wanted, setWanted] = useState(() => mySkills?.wanted ?? [])
 
   const [offeredInput, setOfferedInput] = useState('')
   const [wantedInput, setWantedInput] = useState('')
@@ -198,7 +194,7 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
                   <select
                     value={s.level}
                     onChange={(e) => updateOfferedLevel(s.skill_id, Number(e.target.value))}
-                    className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white outline-none"
+                    className="rounded-lg border border-white/10 bg-slate-800 px-2 py-1 text-xs text-white outline-none"
                   >
                     <option value={1}>Начальный</option>
                     <option value={2}>Средний</option>
@@ -248,7 +244,7 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
                   <select
                     value={s.desired_level}
                     onChange={(e) => updateWantedLevel(s.skill_id, Number(e.target.value))}
-                    className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white outline-none"
+                    className="rounded-lg border border-white/10 bg-slate-800 px-2 py-1 text-xs text-white outline-none"
                   >
                     <option value={1}>Начальный</option>
                     <option value={2}>Средний</option>
@@ -406,16 +402,6 @@ function ProfilePage() {
 
   return (
     <div className="animate-page space-y-8">
-      {/* Онбординг — показываем если профиль не заполнен ИЛИ нет навыков */}
-      {(!isProfileComplete(profile) || (mySkills.offered.length === 0 && mySkills.wanted.length === 0)) ? (
-        <OnboardingBanner
-          profile={profile}
-          onSave={handleUpdateProfile}
-          mySkills={mySkills}
-          onSkillsSave={handleUpdateSkills}
-        />
-      ) : null}
-
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         {/* ── Левая колонка ── */}
         <div className="space-y-6 lg:col-span-1">

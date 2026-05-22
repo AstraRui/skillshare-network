@@ -101,17 +101,27 @@ async def get_my_skills(
     current_user: CurrentUser,
 ) -> dict:
     """Возвращает текущие навыки пользователя."""
-    offered = list(
-        await db.scalars(
-            select(UserSkillsOffered).where(UserSkillsOffered.user_id == current_user.id)
+    offered_rows = list(
+        await db.execute(
+            select(UserSkillsOffered, Skill)
+            .join(Skill, Skill.id == UserSkillsOffered.skill_id)
+            .where(UserSkillsOffered.user_id == current_user.id)
         )
     )
-    wanted = list(
-        await db.scalars(
-            select(UserSkillsWanted).where(UserSkillsWanted.user_id == current_user.id)
+    wanted_rows = list(
+        await db.execute(
+            select(UserSkillsWanted, Skill)
+            .join(Skill, Skill.id == UserSkillsWanted.skill_id)
+            .where(UserSkillsWanted.user_id == current_user.id)
         )
     )
     return {
-        "offered": [{"skill_id": r.skill_id, "level": r.level} for r in offered],
-        "wanted": [{"skill_id": r.skill_id, "desired_level": r.desired_level} for r in wanted],
+        "offered": [
+            {"skill_id": r.skill_id, "skill_name": s.name, "level": r.level}
+            for r, s in offered_rows
+        ],
+        "wanted": [
+            {"skill_id": r.skill_id, "skill_name": s.name, "desired_level": r.desired_level}
+            for r, s in wanted_rows
+        ],
     }

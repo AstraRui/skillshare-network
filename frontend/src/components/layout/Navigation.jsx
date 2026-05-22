@@ -10,7 +10,10 @@ import {
 import { useAuth } from '../../context/AuthContext.jsx'
 import { truncateEmail } from '../../lib/userDisplay.js'
 
-const guestNavItems = [{ to: '/deals', label: 'Заказы', Icon: LayoutGrid }]
+const guestNavItems = [
+  { to: '/', label: 'Обзор', Icon: BarChart3, end: true },
+  { to: '/deals', label: 'Объявления', Icon: LayoutGrid },
+]
 
 const authNavItems = [
   { to: '/', label: 'Обзор', Icon: BarChart3, end: true },
