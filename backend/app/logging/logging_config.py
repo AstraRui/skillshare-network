@@ -1,49 +1,24 @@
-from __future__ import annotations
-
-import json
 import logging
 import sys
-from datetime import UTC, datetime
-from typing import Any
 
-
-class JsonFormatter(logging.Formatter):
-    def format(self, record: logging.LogRecord) -> str:
-        log_data: dict[str, Any] = {
-            "timestamp": datetime.now(UTC).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-        }
-
-        for field in (
-            "request_id",
-            "method",
-            "path",
-            "query_params",
-            "status_code",
-            "duration",
-            "client_ip",
-            "user_agent",
-        ):
-            if hasattr(record, field):
-                log_data[field] = getattr(record, field)
-
-        if record.exc_info:
-            log_data["exception"] = self.formatException(record.exc_info)
-
-        return json.dumps(log_data, ensure_ascii=False)
-
-
+# настройка логов при старте приложения
 def setup_logging() -> None:
+    # настройка вывода логов
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JsonFormatter())
+    # в каком формате выводить логи
+    formatter = logging.Formatter(
+        "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    handler.setFormatter(formatter)
 
+    # применение настроек логирования
     logging.basicConfig(
         level=logging.INFO,
         handlers=[handler],
         force=True,
     )
 
+    # отключение системных логов
     logging.getLogger("uvicorn.access").handlers = []
     logging.getLogger("uvicorn.access").propagate = False

@@ -1,5 +1,3 @@
-"""Правила переписки в сделке (согласовать с продуктом: писать в discussion или только в active)."""
-
 from __future__ import annotations
 
 from app.models.exchange import Exchange, ExchangeStatus

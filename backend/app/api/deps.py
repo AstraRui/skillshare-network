@@ -5,29 +5,56 @@
 
 from __future__ import annotations
 
-from fastapi import Depends, Header, HTTPException
+from typing import Annotated
+
+import jwt
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.settings import settings
 from app.db.session import get_db_session
 from app.models.user import User
 
-# Реэкспорт для удобного импорта в роутерах
 __all__ = ["get_db_session", "get_current_user"]
+
+DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 
 
 async def get_current_user(
-    db: AsyncSession = Depends(get_db_session),
-    x_user_id: int | None = Header(default=None, alias="X-User-Id"),
+    db: DbSession,
+    authorization: str | None = Header(default=None, alias="Authorization"),
 ) -> User:
-    """
-    Временная MVP-аутентификация.
-    Используй заголовок X-User-Id: <id> для подстановки текущего пользователя.
-    """
-    if x_user_id is None:
-        raise HTTPException(status_code=401, detail="Missing X-User-Id header")
+    """Валидирует Bearer JWT и возвращает текущего пользователя."""
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid Authorization header",
+        )
 
-    user = await db.scalar(select(User).where(User.id == x_user_id, User.is_deleted.is_(False)))
+    token = authorization.removeprefix("Bearer ").strip()
+
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+    except jwt.PyJWTError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        ) from exc
+
+    user_id = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    user = await db.scalar(
+        select(User).where(User.id == int(user_id), User.is_deleted.is_(False))
+    )
     if user is None:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or blocked",
+        )
     return user

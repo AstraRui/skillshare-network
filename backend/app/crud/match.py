@@ -49,7 +49,7 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
             UserSkillsOffered.skill_id.in_(my_wanted_ids),
         )
         .correlate(User)
-        .exists()
+        .exists() # True/False
     )
 
     # Условия попадания в кандидаты

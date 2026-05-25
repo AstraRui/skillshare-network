@@ -24,10 +24,7 @@ async def get_me(current_user: CurrentUser) -> User:
 
 
 @router.patch("/me", response_model=UserProfile)
-async def update_me(
-    payload: UserUpdate,
-    db: DbSession,
-    current_user: CurrentUser,
+async def update_me(payload: UserUpdate,db: DbSession,current_user: CurrentUser,
 ) -> User:
     """Обновляет имя и/или аватар текущего пользователя."""
     if payload.full_name is not None:

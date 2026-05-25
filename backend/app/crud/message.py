@@ -9,7 +9,7 @@ from app.models import Message
 async def get_messages(db: AsyncSession, chat_id: int) -> list[Message]:
     result = await db.execute(
         select(Message)
-        .where(Message.chat_id == chat_id, ~Message.is_deleted)
+        .where(Message.chat_id == chat_id, Message.is_deleted)
         .order_by(Message.created_at)
     )
     return list(result.scalars().all())
