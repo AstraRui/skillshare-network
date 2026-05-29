@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoadingHint from '../components/ui/LoadingHint.jsx'
 import { api } from '../api/client.js'
+import {
+  buildSystemLogs,
+  matchCountLabel,
+  matchingPulseText,
+  networkEfficiencyPercent,
+} from '../lib/dashboardActivity.js'
 import { useAuth } from '../context/AuthContext.jsx'
 
 const statusProgress = {
@@ -45,8 +51,10 @@ function DashboardPage() {
   useEffect(() => {
     if (!isAuthenticated) return
     let cancelled = false
-    ;(async () => {
+    queueMicrotask(() => {
+      void (async () => {
       setLoading(true)
+      setLoadError(null)
       try {
         const [ex, me] = await Promise.all([api.myExchanges(), api.getMe()])
         if (cancelled) return

@@ -166,3 +166,10 @@ async def delete_admin_chat(
     admin: CurrentAdmin,
 ) -> None:
     await admin_service.close_chat(db=db, admin=admin, chat_id=chat_id)
+
+
+@router.get("/reports", response_model=list[AdminReportOut])
+async def get_admin_reports(admin: CurrentAdmin) -> list[AdminReportOut]:
+    # В проекте пока нет модели complaints/reports.
+    # Endpoint оставлен как безопасный skeleton для будущего расширения.
+    return []

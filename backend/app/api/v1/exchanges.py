@@ -233,13 +233,42 @@ async def create_direct_exchange(
     })
 
 
-@router.get("", response_model=list[ExchangeOut])
-async def get_my_exchanges(db: DbSession, current_user: CurrentUser) -> list[ExchangeOut]:
-    # Получаем ID сделок где пользователь инициатор
-    initiator_ids = set(
-        await db.scalars(
-            select(Exchange.id)
-            .where(
+def _exchange_list_out(
+    exchange: Exchange,
+    *,
+    listing_title: str | None,
+    partner_id: int | None,
+    partner_full_name: str | None,
+) -> ExchangeListOut:
+    return ExchangeListOut(
+        id=exchange.id,
+        initiator_id=exchange.initiator_id,
+        listing_id=exchange.listing_id,
+        status=exchange.status,
+        is_chain=exchange.is_chain,
+        created_at=exchange.created_at,
+        completed_at=exchange.completed_at,
+        completed_by_initiator=exchange.completed_by_initiator,
+        completed_by_partner=exchange.completed_by_partner,
+        listing_title=listing_title,
+        partner_id=partner_id,
+        partner_full_name=partner_full_name,
+    )
+
+
+@router.get("", response_model=list[ExchangeListOut])
+async def get_my_exchanges(db: DbSession, current_user: CurrentUser) -> list[ExchangeListOut]:
+    stmt: Select[tuple[Exchange]] = (
+        select(Exchange)
+        .outerjoin(
+            ListingInterest,
+            and_(
+                ListingInterest.listing_id == Exchange.listing_id,
+                ListingInterest.status == ListingInterestStatus.accepted,
+            ),
+        )
+        .where(
+            or_(
                 Exchange.initiator_id == current_user.id,
                 Exchange.is_deleted.is_(False),
             )
@@ -447,7 +476,7 @@ async def get_exchange_messages(
 
     chat = await get_chat_by_exchange(db, exchange_id)
     if chat is None:
-        return []
+        chat = await create_chat(db, exchange_id)
 
     return list(
         await db.scalars(

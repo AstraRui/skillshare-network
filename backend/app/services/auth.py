@@ -20,7 +20,10 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return bcrypt.checkpw(password.encode(), password_hash.encode())
+    try:
+        return bcrypt.checkpw(password.encode(), password_hash.encode())
+    except (ValueError, TypeError):
+        return False
 
 
 def create_access_token(user_id: int, role: str) -> str:
@@ -29,6 +32,13 @@ def create_access_token(user_id: int, role: str) -> str:
 
 
 async def register_user(db: AsyncSession, data: UserRegister) -> User:
+    existing = await db.scalar(select(User.id).where(User.email == data.email))
+    if existing is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Пользователь с таким email уже зарегистрирован",
+        )
+
     user = User(
         email=data.email, password_hash=hash_password(data.password), full_name=data.full_name
     )

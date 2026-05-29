@@ -1,4 +1,4 @@
-"""Сообщения: либо чат сделки (exchange_id), либо тред задачи внутри сделки."""
+"""Сообщения: чат сделки (chat_id) или тред задачи (task_id)."""
 
 from __future__ import annotations
 
@@ -31,16 +31,9 @@ class Message(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
-    chat_id: Mapped[int] = mapped_column(
+    chat_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("chats.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-
-    exchange_id: Mapped[int | None] = mapped_column(
-        BigInteger,
-        ForeignKey("exchanges.id", ondelete="CASCADE"),
         nullable=True,
         index=True,
     )
@@ -70,7 +63,7 @@ class Message(Base):
         nullable=False,
     )
 
-    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     chat = relationship("Chat", back_populates="messages")

@@ -12,12 +12,30 @@ async function parseBody(res) {
   }
 }
 
+const STATUS_FALLBACKS = {
+  401: 'Неверный email или пароль',
+  409: 'Этот email уже зарегистрирован',
+  422: 'Проверьте введённые данные',
+  500: 'Ошибка сервера. Попробуйте позже',
+}
+
+function validationEntryMessage(entry) {
+  if (typeof entry === 'string') return entry
+  const msg = entry?.msg
+  if (typeof msg !== 'string') return ''
+  return msg.startsWith('Value error, ') ? msg.slice('Value error, '.length) : msg
+}
+
 function errorMessage(data, res) {
-  if (typeof data !== 'object' || data == null) return res.statusText || `HTTP ${res.status}`
-  const { detail } = data
-  if (Array.isArray(detail)) return detail.map((d) => d.msg || d).join(', ')
-  if (typeof detail === 'string') return detail
-  return res.statusText || `HTTP ${res.status}`
+  if (typeof data === 'object' && data != null) {
+    const { detail } = data
+    if (typeof detail === 'string' && detail.trim()) return detail
+    if (Array.isArray(detail)) {
+      const text = detail.map(validationEntryMessage).filter(Boolean).join('. ')
+      if (text) return text
+    }
+  }
+  return STATUS_FALLBACKS[res.status] || res.statusText || `Ошибка ${res.status}`
 }
 
 export async function request(path, options = {}) {
@@ -44,6 +62,7 @@ export async function request(path, options = {}) {
     return null
   }
   if (!res.ok) throw new Error(errorMessage(data, res))
+  if (res.status === 204) return null
   return data
 }
 
@@ -128,4 +147,17 @@ export const api = {
     const s = q.toString()
     return request(s ? `/admin/exchanges?${s}` : '/admin/exchanges')
   },
+  createListing: (payload) => request('/listings', { method: 'POST', body: payload }),
+  updateListing: (listingId, payload) =>
+    request(`/listings/${listingId}`, { method: 'PATCH', body: payload }),
+  createListingInterest: (listingId, payload = {}) =>
+    request(`/listings/${listingId}/interests`, { method: 'POST', body: payload }),
+  incomingInterests: () => request('/listings/me/incoming-interests'),
+  listingInterests: (listingId) => request(`/listings/${listingId}/interests`),
+  acceptListingInterest: (listingId, responderId) =>
+    request(`/exchanges/listing/${listingId}/accept-interest`, {
+      method: 'POST',
+      body: { responder_id: responderId },
+    }),
+  matches: () => request('/matches'),
 }

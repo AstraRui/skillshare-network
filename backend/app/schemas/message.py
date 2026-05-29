@@ -12,12 +12,12 @@ class MessageRead(BaseModel):
     model_config = {"from_attributes": True}
 
     id: int
-    chat_id: int
+    chat_id: int | None
+    task_id: int | None
     sender_id: int
     content: str | None
     media_url: str | None
     created_at: datetime
-    edited_at: datetime | None
     is_deleted: bool
 
 

@@ -116,7 +116,7 @@ function MessagesPage() {
   const location = useLocation()
   const targetUserId = location.state?.targetUserId ?? null
   const [exchanges, setExchanges] = useState([])
-  const [listingsById, setListingsById] = useState({})
+  const [incomingInterests, setIncomingInterests] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
@@ -130,14 +130,11 @@ function MessagesPage() {
 
   // ── Загрузка списка сделок ─────────────────────────────────────────────────
   const loadExchanges = useCallback(async () => {
-    if (!isAuthenticated) return
     setLoadingList(true)
     setError(null)
     try {
-      const [ex, lists] = await Promise.all([api.myExchanges(), api.listings({})])
-      const map = {}
-      for (const l of lists) map[l.id] = l
-      setListingsById(map)
+      const [ex, incoming] = await Promise.all([api.myExchanges(), api.incomingInterests()])
+      setIncomingInterests(incoming)
       setExchanges(ex)
       setSelectedId((prev) => {
         // При переходе с матчейкинга всегда выбираем обмен с нужным пользователем
@@ -307,11 +304,15 @@ function MessagesPage() {
 
   const confirmDone = async () => {
     if (!selectedId) return
+    setActionBusy(true)
+    setError(null)
     try {
       await api.confirmExchangeCompletion(selectedId)
       await loadExchanges()
     } catch (e) {
       setError(e.message)
+    } finally {
+      setActionBusy(false)
     }
   }
 

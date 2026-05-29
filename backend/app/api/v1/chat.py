@@ -33,83 +33,18 @@ async def get_chat(exchange_id: int, db: DB):
     return chat
 
 
-@router.get("/{chat_id}/messages", response_model=list[MessageRead])
-async def list_messages(chat_id: int, db: DB):
-    return await message_crud.get_messages(db, chat_id)
+@router.get("/exchanges/{exchange_id}/messages", response_model=list[MessageRead])
+async def list_messages(exchange_id: int, db: DB):
+    return await message_crud.get_messages_by_exchange(db, exchange_id)
 
 
-@router.post("/{chat_id}/messages", response_model=MessageRead, status_code=201)
-async def send_message(chat_id: int, body: MessageCreate, db: DB, current_user: CurrentUser):
-    chat = await chat_crud.get_chat_by_exchange(db, chat_id)
+@router.patch("/exchanges/{exchange_id}/messages/{message_id}", response_model=MessageRead)
+async def edit_message(exchange_id: int, message_id: int, body: MessageUpdate, db: DB):
+    chat = await chat_crud.get_chat_by_exchange(db, exchange_id)
     if not chat:
         raise HTTPException(status_code=404, detail="Чат не найден")
-    msg = await message_crud.create_message(
-        db,
-        chat_id=chat.id,
-        sender_id=current_user.id,
-        content=body.content,
-        media_url=body.media_url,
-    )
-    # Рассылаем новое сообщение всем подключённым по WS
-    await manager.broadcast(
-        chat.id,
-        {
-            "id": msg.id,
-            "chat_id": msg.chat_id,
-            "sender_id": msg.sender_id,
-            "content": msg.content,
-            "media_url": msg.media_url,
-            "created_at": msg.created_at.isoformat(),
-            "edited_at": msg.edited_at.isoformat() if msg.edited_at else None,
-            "is_deleted": msg.is_deleted,
-        },
-    )
-    return msg
-
-
-@router.websocket("/{chat_id}/ws")
-async def chat_websocket(
-    chat_id: int,
-    websocket: WebSocket,
-    token: str | None = None,
-):
-    """
-    WebSocket-эндпоинт для real-time чата.
-    Подключение: ws://host/api/v1/chat/{chat_id}/ws?token=<jwt>
-    """
-    # Валидация JWT токена
-    if not token:
-        await websocket.close(code=4001, reason="Missing token")
-        return
-
-    try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
-        user_id = int(payload.get("sub"))
-    except (PyJWTError, ValueError, TypeError):
-        await websocket.close(code=4001, reason="Invalid token")
-        return
-
-    # Проверяем что чат существует
-    async with SessionLocal() as db:
-        chat = await chat_crud.get_chat_by_exchange(db, chat_id)
-        if not chat:
-            await websocket.close(code=4004, reason="Chat not found")
-            return
-        real_chat_id = chat.id
-
-    await manager.connect(real_chat_id, websocket)
-    try:
-        # Держим соединение открытым, слушаем пинги/служебные сообщения от клиента
-        while True:
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        manager.disconnect(real_chat_id, websocket)
-
-
-@router.patch("/{chat_id}/messages/{message_id}", response_model=MessageRead)
-async def edit_message(chat_id: int, message_id: int, body: MessageUpdate, db: DB):
     result = await db.execute(
-        select(Message).where(Message.chat_id == chat_id, Message.id == message_id)
+        select(Message).where(Message.chat_id == chat.id, Message.id == message_id)
     )
     msg = result.scalar_one_or_none()
     if not msg:
@@ -117,10 +52,13 @@ async def edit_message(chat_id: int, message_id: int, body: MessageUpdate, db: D
     return await message_crud.edit_message(db, msg, body.content)
 
 
-@router.delete("/{chat_id}/messages/{message_id}", response_model=MessageRead)
-async def delete_message(chat_id: int, message_id: int, db: DB):
+@router.delete("/exchanges/{exchange_id}/messages/{message_id}", response_model=MessageRead)
+async def delete_message(exchange_id: int, message_id: int, db: DB):
+    chat = await chat_crud.get_chat_by_exchange(db, exchange_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Чат не найден")
     result = await db.execute(
-        select(Message).where(Message.chat_id == chat_id, Message.id == message_id)
+        select(Message).where(Message.chat_id == chat.id, Message.id == message_id)
     )
     msg = result.scalar_one_or_none()
     if not msg:
