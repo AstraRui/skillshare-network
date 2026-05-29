@@ -1,8 +1,3 @@
-"""
-Общие зависимости FastAPI (Depends).
-Импортируй отсюда во всех роутерах.
-"""
-
 from __future__ import annotations
 
 from typing import Annotated
@@ -14,18 +9,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.settings import settings
 from app.db.session import get_db_session
-from app.models.user import User
-
-__all__ = ["get_db_session", "get_current_user"]
+from app.models.user import User, UserRole
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 
 
-async def get_current_user(
+async def get_current_admin(
     db: DbSession,
     authorization: str | None = Header(default=None, alias="Authorization"),
 ) -> User:
-    """Валидирует Bearer JWT и возвращает текущего пользователя."""
+    # проверяем что заголовок Authorization есть и начинается с Bearer
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -57,4 +50,11 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or blocked",
         )
+
+    if user.role != UserRole.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required",
+        )
+
     return user

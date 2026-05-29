@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
@@ -24,7 +24,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_access_token(user_id: int, role: str) -> str:
-    payload = {"sub": str(user_id), "role": role, "exp": datetime.utcnow() + timedelta(hours=24)}
+    payload = {"sub": str(user_id), "role": role, "exp": datetime.now(UTC) + timedelta(hours=24)}
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")
 
 

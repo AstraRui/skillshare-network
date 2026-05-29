@@ -17,7 +17,6 @@ DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 
 @router.get("/categories", response_model=list[SkillCategoryOut])
 async def get_categories(db: DbSession) -> list[SkillCategory]:
-    """Список всех категорий навыков."""
     result = await db.scalars(
         select(SkillCategory)
         .where(SkillCategory.is_deleted.is_(False))
