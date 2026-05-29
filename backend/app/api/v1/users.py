@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +11,7 @@ from app.api.deps import get_current_user, get_db_session
 from app.models.skill import Skill, UserSkillsOffered, UserSkillsWanted
 from app.models.user import User
 from app.schemas.user import UserProfile, UserSkillsPayload, UserUpdate
+from app.services.user import cancel_user_exchanges
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -93,6 +95,19 @@ async def update_my_skills(
 
     await db.flush()
     return {"ok": True}
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(
+    db: DbSession,
+    current_user: CurrentUser,
+) -> None:
+    """Мягкое удаление пользователя с отменой всех активных сделок."""
+    await cancel_user_exchanges(db, current_user.id)
+
+    current_user.is_deleted = True
+    current_user.deleted_at = datetime.now(UTC)
+    await db.flush()
 
 
 @router.get("/me/skills")

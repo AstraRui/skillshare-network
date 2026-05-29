@@ -143,11 +143,13 @@ function MessagesPage() {
     const text = draft.trim()
     if (!text || !selectedId) return
     try {
-      await api.sendChatMessage(selectedId, text)
+      const newMessage = await api.sendChatMessage(selectedId, text)
       setDraft('')
+      // Если WebSocket не подключен, добавляем сообщение в стейт локально
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        await loadMessages(selectedId)
+        setMessages((prev) => [...prev, newMessage])
       }
+      // Если WebSocket работает, сообщение придет через onmessage
     } catch (e) {
       setError(e.message)
     }

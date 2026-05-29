@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, get_db_session
 from app.crud.chat import create_chat, get_chat_by_exchange
 from app.models.exchange import Exchange, ExchangeStatus
+from app.ws.manager import manager
 from app.models.listing import Listing, ListingInterest, ListingInterestStatus
 from app.models.message import Message
 from app.models.review import Review
@@ -265,6 +266,22 @@ async def post_exchange_message(
     current_user.last_active_at = datetime.now(UTC)
     await db.flush()
     await db.refresh(message)
+
+    # WebSocket broadcast для real-time доставки
+    await manager.broadcast(
+        chat.id,
+        {
+            "id": message.id,
+            "chat_id": message.chat_id,
+            "sender_id": message.sender_id,
+            "content": message.content,
+            "media_url": message.media_url,
+            "created_at": message.created_at.isoformat(),
+            "edited_at": message.edited_at.isoformat() if message.edited_at else None,
+            "is_deleted": message.is_deleted,
+        },
+    )
+
     return message
 
 
