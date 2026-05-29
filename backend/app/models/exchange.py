@@ -48,6 +48,10 @@ class Exchange(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_by_initiator: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     completed_by_partner: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Двухстороннее подтверждение начала обмена
+    started_by_initiator: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    started_by_partner: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_moderated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -80,11 +84,11 @@ class ExchangeParticipant(Base):
     user_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("users.id", ondelete="RESTRICT"), primary_key=True
     )
-    gives_skill_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("skills.id", ondelete="RESTRICT"), nullable=False, index=True
+    gives_skill_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("skills.id", ondelete="RESTRICT"), nullable=True, index=True
     )
-    gets_skill_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("skills.id", ondelete="RESTRICT"), nullable=False, index=True
+    gets_skill_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("skills.id", ondelete="RESTRICT"), nullable=True, index=True
     )
     position: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
 

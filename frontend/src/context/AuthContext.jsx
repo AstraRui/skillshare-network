@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react'
 import { api } from '../api/client.js'
-import { jwtUserId } from '../lib/jwt.js'
+import { jwtUserId, jwtUserRole } from '../lib/jwt.js'
 import { initialsFromEmail } from '../lib/userDisplay.js'
 
 const AuthContext = createContext(null)
@@ -26,6 +26,7 @@ export function AuthProvider({ children }) {
   const clearJustRegistered = useCallback(() => setJustRegistered(false), [])
 
   const userId = useMemo(() => (token ? jwtUserId(token) : null), [token])
+  const isAdmin = useMemo(() => jwtUserRole(token) === 'admin', [token])
 
   const userInitials = useMemo(() => {
     if (!email) return '?'
@@ -62,6 +63,7 @@ export function AuthProvider({ children }) {
       email,
       userInitials,
       isAuthenticated: Boolean(token && userId != null),
+      isAdmin,
       justRegistered,
       clearJustRegistered,
       login,
@@ -74,6 +76,7 @@ export function AuthProvider({ children }) {
     [
       token,
       userId,
+      isAdmin,
       email,
       userInitials,
       justRegistered,

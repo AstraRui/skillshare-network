@@ -19,9 +19,7 @@ class Settings(BaseSettings):
     # AnyUrl — специальный тип Pydantic,
     # который проверяет что строка является валидным URL
     # (есть протокол, домен и т.д.).
-    public_base_url: AnyUrl | None = (
-        None  # Нужно когда надо генерировать абсолютные ссылки, например в письмахНужно когда надо генерировать абсолютные ссылки, например в письмах
-    )
+    public_base_url: AnyUrl | None = None
 
 
 settings = Settings()

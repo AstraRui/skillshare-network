@@ -23,10 +23,6 @@ function AppLayout() {
         <Outlet />
       </main>
 
-      <footer className="relative z-10 border-t border-white/5 py-5 text-center text-[11px] text-slate-600">
-        SkillShare — MVP · API{' '}
-        <code className="text-slate-500">/api/v1</code>
-      </footer>
     </div>
   )
 }

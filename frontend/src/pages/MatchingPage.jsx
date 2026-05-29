@@ -43,6 +43,8 @@ function MatchingPage() {
   // selectedNode — зафиксированный выбор по клику
   const [hoveredNode, setHoveredNode] = useState(null)
   const [selectedNode, setSelectedNode] = useState(null)
+  const [writing, setWriting] = useState(false)
+  const [writeError, setWriteError] = useState(null)
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -75,6 +77,20 @@ function MatchingPage() {
     ? nodes.find((n) => n.id === selectedNode)
     : null
   const activeNode = panelNode ?? (hoveredNode != null ? nodes.find((n) => n.id === hoveredNode) : null)
+
+  const handleWrite = async () => {
+    if (!activeNode) return
+    setWriting(true)
+    setWriteError(null)
+    try {
+      await api.startDirectExchange(activeNode.id)
+      navigate('/messages', { state: { targetUserId: activeNode.id } })
+    } catch (e) {
+      setWriteError(e.message)
+    } finally {
+      setWriting(false)
+    }
+  }
 
   const nodeStyle = (n) => ({
     left: `${(n.x / VIEW_W) * 100}%`,
@@ -226,13 +242,18 @@ function MatchingPage() {
                     </p>
                   ) : null}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end gap-2">
+                  {writeError ? (
+                    <p className="text-[10px] text-red-400">{writeError}</p>
+                  ) : null}
+                  <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => navigate('/messages')}
-                    className="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-indigo-500"
+                    onClick={() => void handleWrite()}
+                    disabled={writing}
+                    className="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-indigo-500 disabled:opacity-50"
                   >
-                    Написать
+                    {writing ? 'Подключаем…' : 'Написать'}
                   </button>
                   {selectedNode != null ? (
                     <button
@@ -244,6 +265,7 @@ function MatchingPage() {
                       <X size={14} />
                     </button>
                   ) : null}
+                  </div>
                 </div>
               </div>
             </div>

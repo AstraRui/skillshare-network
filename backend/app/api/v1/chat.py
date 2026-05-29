@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+import jwt
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status
 from fastapi.params import Depends
+from jwt import PyJWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.core.settings import settings
 from app.crud import chat as chat_crud
 from app.crud import message as message_crud
 from app.db.session import SessionLocal, get_db_session
@@ -65,16 +68,32 @@ async def send_message(chat_id: int, body: MessageCreate, db: DB, current_user: 
 
 
 @router.websocket("/{chat_id}/ws")
-async def chat_websocket(chat_id: int, websocket: WebSocket, user_id: int):
+async def chat_websocket(
+    chat_id: int,
+    websocket: WebSocket,
+    token: str | None = None,
+):
     """
     WebSocket-эндпоинт для real-time чата.
-    Подключение: ws://host/api/v1/chat/{chat_id}/ws?user_id=<id>
+    Подключение: ws://host/api/v1/chat/{chat_id}/ws?token=<jwt>
     """
+    # Валидация JWT токена
+    if not token:
+        await websocket.close(code=4001, reason="Missing token")
+        return
+
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+        user_id = int(payload.get("sub"))
+    except (PyJWTError, ValueError, TypeError):
+        await websocket.close(code=4001, reason="Invalid token")
+        return
+
     # Проверяем что чат существует
     async with SessionLocal() as db:
         chat = await chat_crud.get_chat_by_exchange(db, chat_id)
         if not chat:
-            await websocket.close(code=4004)
+            await websocket.close(code=4004, reason="Chat not found")
             return
         real_chat_id = chat.id
 

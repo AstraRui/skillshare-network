@@ -1,8 +1,102 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MessageSquare, MoreVertical, Search, Send, Smile } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
+import { MessageSquare, Search, Send } from 'lucide-react'
 import LoadingHint from '../components/ui/LoadingHint.jsx'
 import { api } from '../api/client.js'
 import { useAuth } from '../context/AuthContext.jsx'
+
+function StarPicker({ value, onChange }) {
+  const [hovered, setHovered] = useState(0)
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <button
+          key={s}
+          type="button"
+          onMouseEnter={() => setHovered(s)}
+          onMouseLeave={() => setHovered(0)}
+          onClick={() => onChange(s)}
+          className={`text-2xl transition-colors ${s <= (hovered || value) ? 'text-amber-400' : 'text-slate-700'}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ReviewPanel({ exchangeId, userId }) {
+  const [reviews, setReviews] = useState(null)
+  const [rating, setRating] = useState(0)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    api.exchangeReviews(exchangeId).then(setReviews).catch(() => setReviews([]))
+  }, [exchangeId])
+
+  const myReview = reviews?.find((r) => r.reviewer_id === userId)
+  const canReview = reviews !== null && !myReview
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!rating) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      await api.submitReview(exchangeId, rating, comment.trim() || null)
+      const updated = await api.exchangeReviews(exchangeId)
+      setReviews(updated)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (reviews === null) return null
+
+  return (
+    <div className="border-t border-white/5 bg-slate-900/60 px-4 py-4 sm:px-6">
+      {myReview ? (
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-500">Ваш отзыв:</span>
+          <span className="text-amber-400">{'★'.repeat(myReview.rating)}{'☆'.repeat(5 - myReview.rating)}</span>
+          {myReview.comment ? <span className="text-xs text-slate-400 truncate">{myReview.comment}</span> : null}
+        </div>
+      ) : canReview ? (
+        <form onSubmit={handleSubmit}>
+          <p className="mb-3 text-xs font-black uppercase tracking-widest text-slate-400">
+            Оставить отзыв о сделке
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="space-y-2">
+              <StarPicker value={rating} onChange={setRating} />
+              <input
+                type="text"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Комментарий (необязательно)"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none focus:border-indigo-500 sm:w-72"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!rating || submitting}
+              className="shrink-0 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-indigo-500 disabled:opacity-40"
+            >
+              {submitting ? '…' : 'Отправить'}
+            </button>
+          </div>
+          {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}
+        </form>
+      ) : (
+        <p className="text-xs text-slate-500">Сделка завершена</p>
+      )}
+    </div>
+  )
+}
 
 function formatTime(iso) {
   if (!iso) return ''
@@ -19,6 +113,8 @@ const statusLabel = {
 
 function MessagesPage() {
   const { isAuthenticated, userId } = useAuth()
+  const location = useLocation()
+  const targetUserId = location.state?.targetUserId ?? null
   const [exchanges, setExchanges] = useState([])
   const [listingsById, setListingsById] = useState({})
   const [selectedId, setSelectedId] = useState(null)
@@ -44,6 +140,14 @@ function MessagesPage() {
       setListingsById(map)
       setExchanges(ex)
       setSelectedId((prev) => {
+        // При переходе с матчейкинга всегда выбираем обмен с нужным пользователем
+        if (targetUserId != null) {
+          const target = ex.find(
+            (e) => e.initiator_id === targetUserId || e.partner_id === targetUserId,
+          )
+          // Нашли обмен — открываем его; не нашли — null (покажем подсказку)
+          return target ? target.id : null
+        }
         if (prev != null && ex.some((e) => e.id === prev)) return prev
         return ex[0]?.id ?? null
       })
@@ -52,7 +156,7 @@ function MessagesPage() {
     } finally {
       setLoadingList(false)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, targetUserId])
 
   useEffect(() => {
     ;(async () => {
@@ -94,6 +198,9 @@ function MessagesPage() {
     let ws = null
     let cancelled = false
 
+    // Очищаем кэш предыдущего чата при смене сделки
+    chatIdCache.current = {}
+
     const connect = async () => {
       // Получаем реальный chat_id для WS (кэшируем в ref чтобы не вызывать лишних ре-рендеров)
       let chatId = chatIdCache.current[selectedId]
@@ -111,12 +218,25 @@ function MessagesPage() {
 
       const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
       const host = window.location.host
-      ws = new WebSocket(`${proto}://${host}/api/v1/chat/${chatId}/ws?user_id=${userId}`)
+      const token = localStorage.getItem('ssn_token')
+      ws = new WebSocket(`${proto}://${host}/api/v1/chat/${chatId}/ws?token=${token}`)
       wsRef.current = ws
 
       ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data)
-        setMessages((prev) => [...prev, msg])
+        const data = JSON.parse(event.data)
+        if (data.type === 'exchange_update') {
+          // Обновляем состояние сделки, сохраняя partner_id/partner_name текущего пользователя
+          setExchanges((prev) =>
+            prev.map((ex) => {
+              if (ex.id !== data.exchange.id) return ex
+              // eslint-disable-next-line no-unused-vars
+              const { partner_id, partner_name, ...statusFields } = data.exchange
+              return { ...ex, ...statusFields }
+            }),
+          )
+        } else {
+          setMessages((prev) => [...prev, data])
+        }
       }
 
       ws.onerror = () => {
@@ -143,13 +263,45 @@ function MessagesPage() {
     const text = draft.trim()
     if (!text || !selectedId) return
     try {
-      await api.sendChatMessage(selectedId, text)
+      const newMessage = await api.sendChatMessage(selectedId, text)
       setDraft('')
+      // Если WebSocket не подключен, добавляем сообщение в стейт локально
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        await loadMessages(selectedId)
+        setMessages((prev) => [...prev, newMessage])
       }
+      // Если WebSocket работает, сообщение придет через onmessage
     } catch (e) {
       setError(e.message)
+    }
+  }
+
+  const startExchange = async () => {
+    if (!selectedId) return
+    try {
+      await api.requestStartExchange(selectedId)
+      await loadExchanges()
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  // Определяем статус для текущего пользователя
+  const getStartStatus = () => {
+    if (!selected) return null
+    const isInitiator = selected.initiator_id === userId
+    const iConfirmed = selected.started_by_initiator
+    const pConfirmed = selected.started_by_partner
+
+    if (isInitiator) {
+      if (iConfirmed && pConfirmed) return 'both_confirmed'
+      if (iConfirmed) return 'waiting_partner'
+      if (pConfirmed) return 'partner_waiting_you'
+      return 'ready_to_start'
+    } else {
+      if (iConfirmed && pConfirmed) return 'both_confirmed'
+      if (pConfirmed) return 'waiting_partner'
+      if (iConfirmed) return 'partner_waiting_you'
+      return 'ready_to_start'
     }
   }
 
@@ -164,8 +316,8 @@ function MessagesPage() {
   }
 
   const selected = exchanges.find((e) => e.id === selectedId)
-  const title = selected?.listing_id
-    ? (listingsById[selected.listing_id]?.title ?? `Сделка #${selected.id}`)
+  const title = selected?.partner_name
+    ? `${selected.partner_name} (#${selected.id})`
     : selected
       ? `Сделка #${selected.id}`
       : ''
@@ -218,10 +370,9 @@ function MessagesPage() {
           ) : (
             <div className="space-y-1">
               {exchanges.map((ex) => {
-                const name =
-                  ex.listing_id
-                    ? (listingsById[ex.listing_id]?.title ?? `Обмен #${ex.id}`)
-                    : `Обмен #${ex.id}`
+                const name = ex.partner_name
+                  ? `${ex.partner_name} (#${ex.id})`
+                  : `Обмен #${ex.id}`
                 return (
                   <button
                     key={ex.id}
@@ -265,8 +416,19 @@ function MessagesPage() {
       {/* ── Область чата ── */}
       <div className="flex min-h-0 flex-1 flex-col bg-slate-900/10">
         {selectedId == null ? (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-slate-500">Выберите сделку слева</p>
+          <div className="flex flex-1 items-center justify-center px-6">
+            {targetUserId != null ? (
+              <div className="text-center">
+                <MessageSquare className="mx-auto mb-3 text-slate-600" size={32} />
+                <p className="text-sm font-bold text-slate-400">Нет общей сделки</p>
+                <p className="mt-2 text-xs text-slate-500">
+                  Чтобы написать этому пользователю, сначала откликнитесь на его объявление
+                  на странице Сделки.
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">Выберите сделку слева</p>
+            )}
           </div>
         ) : (
           <>
@@ -287,14 +449,36 @@ function MessagesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="p-2 text-slate-400 transition hover:text-white"
-                  aria-label="Меню"
-                >
-                  <MoreVertical size={18} />
-                </button>
-                {selected?.status === 'active' ? (
+                {selected?.status === 'discussion' ? (() => {
+                  const startStatus = getStartStatus()
+                  if (startStatus === 'waiting_partner') {
+                    return (
+                      <span className="rounded-xl bg-slate-700 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        Ожидаем подтверждения
+                      </span>
+                    )
+                  }
+                  if (startStatus === 'partner_waiting_you') {
+                    return (
+                      <button
+                        type="button"
+                        onClick={startExchange}
+                        className="rounded-xl bg-amber-500 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 animate-pulse"
+                      >
+                        Подтвердить начало
+                      </button>
+                    )
+                  }
+                  return (
+                    <button
+                      type="button"
+                      onClick={startExchange}
+                      className="rounded-xl bg-amber-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition hover:bg-amber-500"
+                    >
+                      Начать обмен
+                    </button>
+                  )
+                })() : selected?.status === 'active' ? (
                   <button
                     type="button"
                     onClick={confirmDone}
@@ -360,13 +544,6 @@ function MessagesPage() {
                   placeholder="Введите сообщение..."
                   className="min-w-0 flex-1 border-none bg-transparent px-2 text-sm text-white outline-none ring-0 placeholder:text-slate-600"
                 />
-                <button
-                  type="button"
-                  className="p-2 text-slate-500 transition hover:text-indigo-400"
-                  aria-label="Эмодзи"
-                >
-                  <Smile size={18} />
-                </button>
                 <button
                   type="button"
                   onClick={() => void send()}

@@ -12,8 +12,13 @@ from app.models.skill import Skill, UserSkillsOffered, UserSkillsWanted
 from app.models.user import User
 from app.schemas.match import MatchResult, ScoreBreakdown, SkillMatch
 
+# Максимальное количество обменов для нормализации репутации
+MAX_EXCHANGES_FOR_REPUTATION = 200
 
-async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
+
+async def find_matches(
+    db: AsyncSession, user_id: int, limit: int = 20, offset: int = 0
+) -> list[MatchResult]:
     # Навыки текущего пользователя
     my_offered_rows = list(
         await db.execute(
@@ -72,7 +77,13 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
         )
         conditions.append(wants_what_i_offer)
 
-    candidates: list[User] = list(await db.scalars(select(User).where(*conditions)))
+    # Берём кандидатов прошедших SQL-фильтры; 500 — защита от взрыва при большой БД.
+    # Финальный limit применяем в конце после score-фильтрации и дедупа по категориям.
+    candidates: list[User] = list(
+        await db.scalars(
+            select(User).where(*conditions).limit(500)
+        )
+    )
     if not candidates:
         return []
 
@@ -170,8 +181,16 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
     for r in participant_rows:
         exchange_counts[r.responder_id] = exchange_counts.get(r.responder_id, 0) + r.cnt
 
-    # Доделать после добавления updated_at в UserSkillsOffered
-    fraudulent_user_ids: frozenset[int] = frozenset()
+    # Антифрод: получаем список фродовых пользователей
+    fraudulent_rows = list(
+        await db.scalars(
+            select(User.id).where(
+                User.id.in_(candidate_ids),
+                User.is_fraudulent.is_(True),
+            )
+        )
+    )
+    fraudulent_user_ids: frozenset[int] = frozenset(fraudulent_rows)
 
     scored: list[tuple[float, int, MatchResult]] = []
 
@@ -224,7 +243,7 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
                 rating_norm = max(0.0, rating_norm)
 
             exp_count = exchange_counts.get(cid, 0)
-            exp_norm = math.log(1 + exp_count) / math.log(201)
+            exp_norm = math.log(1 + exp_count) / math.log(MAX_EXCHANGES_FOR_REPUTATION + 1)
 
             positive = sum(1 for r in reviews if r >= 4)
             pos_share = positive / n
@@ -298,20 +317,21 @@ async def find_matches(db: AsyncSession, user_id: int) -> list[MatchResult]:
         )
         scored.append((final_score, category_id, result))
 
+    def sort_key(item: tuple[float, int | None, MatchResult]) -> float:
+        return item[0]
+
     # Фильтр по минимальному порогу и сортировка
     scored = [(s, cat, r) for s, cat, r in scored if s >= 0.2]
-    scored.sort(key=lambda x: x[0], reverse=True)
+    scored.sort(key=sort_key, reverse=True)
 
-    # Дедупликация по категориям: не более 2 кандидатов из одной категории
+    # Дедупликация по категориям: не более 5 кандидатов из одной категории
     category_counts: dict[int | None, int] = {}
     final: list[MatchResult] = []
 
     for _final_score, category_id, result in scored:
         cnt = category_counts.get(category_id, 0)
-        if cnt < 2:
+        if cnt < 5:
             final.append(result)
             category_counts[category_id] = cnt + 1
-        if len(final) >= 20:
-            break
 
-    return final
+    return final[:limit]

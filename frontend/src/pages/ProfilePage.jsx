@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Award,
   Bell,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Eye,
+  EyeOff,
   LogOut,
   PlusCircle,
   Settings,
@@ -280,14 +283,143 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
   )
 }
 
+function SecuritySection() {
+  const [cur, setCur] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [showCur, setShowCur] = useState(false)
+  const [showNext, setShowNext] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (next !== confirm) { setError('Пароли не совпадают'); return }
+    setSaving(true); setError(null); setSuccess(false)
+    try {
+      await api.changePassword(cur, next)
+      setSuccess(true); setCur(''); setNext(''); setConfirm('')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
+      <h3 className="mb-6 text-2xl font-black uppercase italic text-white">Безопасность</h3>
+      <form onSubmit={handleSubmit} className="max-w-md space-y-4">
+        {[
+          { label: 'Текущий пароль', val: cur, set: setCur, show: showCur, toggle: () => setShowCur(v => !v) },
+          { label: 'Новый пароль', val: next, set: setNext, show: showNext, toggle: () => setShowNext(v => !v) },
+          { label: 'Повторите новый пароль', val: confirm, set: setConfirm, show: showNext, toggle: null },
+        ].map(({ label, val, set, show, toggle }) => (
+          <div key={label}>
+            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</label>
+            <div className="relative">
+              <input
+                type={show ? 'text' : 'password'}
+                value={val}
+                onChange={e => set(e.target.value)}
+                required
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none ring-indigo-500 focus:ring-1 pr-10"
+              />
+              {toggle ? (
+                <button type="button" onClick={toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                  {show ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ))}
+        {error ? <p className="text-xs text-red-400">{error}</p> : null}
+        {success ? <p className="text-xs text-green-400">Пароль успешно изменён</p> : null}
+        <button
+          type="submit"
+          disabled={saving || !cur || !next || !confirm}
+          className="rounded-xl bg-indigo-600 px-6 py-3 text-xs font-black uppercase tracking-widest text-white transition hover:bg-indigo-500 disabled:opacity-50"
+        >
+          {saving ? 'Сохраняем…' : 'Сменить пароль'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+function Toggle({ checked, onChange }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={onChange}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus:outline-none ${
+        checked ? 'bg-indigo-600' : 'bg-slate-700'
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  )
+}
+
+function NotificationsSection() {
+  const [settings, setSettings] = useState({
+    new_match: false,
+    exchange_update: false,
+    new_message: false,
+    reviews: false,
+  })
+  const toggle = (key) => setSettings(prev => ({ ...prev, [key]: !prev[key] }))
+
+  const items = [
+    { key: 'new_match', label: 'Новые матчи', desc: 'Когда алгоритм находит подходящего партнёра' },
+    { key: 'exchange_update', label: 'Обновления сделок', desc: 'Подтверждения начала и завершения обменов' },
+    { key: 'new_message', label: 'Новые сообщения', desc: 'Входящие сообщения в чатах сделок' },
+    { key: 'reviews', label: 'Отзывы', desc: 'Когда партнёр оставляет отзыв о сделке' },
+  ]
+
+  return (
+    <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
+      <div className="mb-6 flex items-center gap-3">
+        <h3 className="text-2xl font-black uppercase italic text-white">Уведомления</h3>
+        <span className="rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-indigo-400">
+          Coming soon
+        </span>
+      </div>
+      <p className="mb-6 text-xs text-slate-500">Управление уведомлениями в приложении</p>
+      <div className="max-w-md space-y-3">
+        {items.map(({ key, label, desc }) => (
+          <div key={key} className="flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-white">{label}</p>
+              <p className="text-xs text-slate-500">{desc}</p>
+            </div>
+            <Toggle checked={settings[key]} onChange={() => toggle(key)} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function ProfilePage() {
   const { userId, email, logout } = useAuth()
+  const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [myListings, setMyListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [saveError, setSaveError] = useState(null)
+  const [activeSection, setActiveSection] = useState('settings')
+  const [receivedReviews, setReceivedReviews] = useState([])
   // listing_id → { open, interests, loading, error, accepting }
   const [interestState, setInterestState] = useState({})
   // Навыки пользователя
@@ -299,16 +431,18 @@ function ProfilePage() {
     const load = async () => {
       setLoading(true)
       try {
-        const [me, listings, userSkills] = await Promise.all([
+        const [me, listings, userSkills, reviews] = await Promise.all([
           api.getMe(),
           api.listings({ author_id: userId }),
           api.getMySkills(),
+          api.myReceivedReviews(),
         ])
         if (!cancelled) {
           setProfile(me)
           setMyListings(listings)
           setNameInput(me.full_name ?? '')
           setMySkills(userSkills)
+          setReceivedReviews(reviews)
         }
       } catch {
         // профиль не загрузился — покажем онбординг
@@ -407,21 +541,10 @@ function ProfilePage() {
         <div className="space-y-6 lg:col-span-1">
           {/* Аккаунт */}
           <div className="rounded-[40px] border border-white/5 bg-slate-900 p-6">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-white">
+            <h3 className="mb-3 text-sm font-black uppercase tracking-widest text-white">
               Аккаунт
             </h3>
-            <div className="space-y-3 text-sm text-slate-300">
-              <p>
-                <span className="text-slate-500">Email:</span> {email}
-              </p>
-              <button
-                type="button"
-                onClick={logout}
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-2 text-xs font-bold text-white transition hover:bg-white/10"
-              >
-                Выйти из аккаунта
-              </button>
-            </div>
+            <p className="text-xs text-slate-500 break-all">{email}</p>
           </div>
 
           {/* Карточка профиля */}
@@ -500,31 +623,29 @@ function ProfilePage() {
 
           {/* Меню */}
           <div className="space-y-2 rounded-[32px] border border-white/5 bg-slate-900 p-6">
-            <button
-              type="button"
-              className="flex w-full items-center space-x-3 rounded-xl border border-indigo-500/20 bg-indigo-600/10 p-3 text-indigo-400"
-            >
-              <Settings size={16} />
-              <span className="text-xs font-bold">Настройки аккаунта</span>
-            </button>
-            <button
-              type="button"
-              className="flex w-full items-center space-x-3 rounded-xl p-3 text-slate-400 transition hover:bg-white/5"
-            >
-              <ShieldCheck size={16} />
-              <span className="text-xs font-bold">Безопасность</span>
-            </button>
-            <button
-              type="button"
-              className="flex w-full items-center space-x-3 rounded-xl p-3 text-slate-400 transition hover:bg-white/5"
-            >
-              <Bell size={16} />
-              <span className="text-xs font-bold">Уведомления</span>
-            </button>
+            {[
+              { key: 'settings', label: 'Настройки аккаунта', Icon: Settings },
+              { key: 'security', label: 'Безопасность', Icon: ShieldCheck },
+              { key: 'notifications', label: 'Уведомления', Icon: Bell },
+            ].map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveSection(key)}
+                className={`flex w-full items-center space-x-3 rounded-xl p-3 transition ${
+                  activeSection === key
+                    ? 'border border-indigo-500/20 bg-indigo-600/10 text-indigo-400'
+                    : 'text-slate-400 hover:bg-white/5'
+                }`}
+              >
+                <Icon size={16} />
+                <span className="text-xs font-bold">{label}</span>
+              </button>
+            ))}
             <button
               type="button"
               onClick={logout}
-              className="mt-4 flex w-full items-center space-x-3 rounded-xl p-3 text-red-500 transition hover:bg-red-500/10"
+              className="mt-2 flex w-full items-center space-x-3 rounded-xl p-3 text-red-500 transition hover:bg-red-500/10"
             >
               <LogOut size={16} />
               <span className="text-xs font-bold">Выйти</span>
@@ -534,6 +655,9 @@ function ProfilePage() {
 
         {/* ── Правая колонка ── */}
         <div className="space-y-8 lg:col-span-3">
+          {activeSection === 'security' ? <SecuritySection /> : null}
+          {activeSection === 'notifications' ? <NotificationsSection /> : null}
+          {activeSection !== 'settings' ? null : <>
           {/* Мои навыки */}
           <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
             <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -566,6 +690,7 @@ function ProfilePage() {
               </div>
               <button
                 type="button"
+                onClick={() => navigate('/deals', { state: { openCreate: true } })}
                 className="rounded-xl bg-indigo-500 p-2 text-white transition hover:bg-indigo-400"
                 aria-label="Добавить объявление"
               >
@@ -712,6 +837,34 @@ function ProfilePage() {
               </div>
             </div>
           </div>
+          {receivedReviews.length > 0 ? (
+            <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
+              <h3 className="mb-6 text-lg font-black uppercase italic text-white">
+                Отзывы обо мне
+                <span className="ml-3 text-sm font-normal text-slate-500">({receivedReviews.length})</span>
+              </h3>
+              <div className="space-y-4">
+                {receivedReviews.slice(0, 8).map((r) => (
+                  <div key={r.id} className="rounded-2xl border border-white/5 bg-white/5 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-white">
+                          {r.reviewer_name ?? `Пользователь #${r.reviewer_id}`}
+                        </p>
+                        {r.comment ? (
+                          <p className="mt-1 text-xs text-slate-400">{r.comment}</p>
+                        ) : null}
+                      </div>
+                      <span className="shrink-0 text-amber-400 text-sm">
+                        {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          </>}
         </div>
       </div>
     </div>

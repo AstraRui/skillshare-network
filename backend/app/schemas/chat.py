@@ -13,4 +13,4 @@ class ChatRead(BaseModel):
     exchange_id: int
     status: ChatStatus
     created_at: datetime
-    messages: list[MessageRead] = []
+    # Сообщения загружаются отдельно через /api/v1/chat/{chat_id}/messages

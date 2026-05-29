@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
 
 
 class UserRegister(BaseModel):
@@ -57,6 +57,18 @@ class UserUpdate(BaseModel):
 
     full_name: str | None = None
     avatar_url: str | None = None
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_pass(cls, v: str) -> str:
+        if len(v) < 10:
+            raise ValueError("Пароль должен содержать минимум 10 символов")
+        return v
 
 
 class UserSkillOffered(BaseModel):

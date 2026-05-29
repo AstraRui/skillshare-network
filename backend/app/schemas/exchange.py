@@ -11,11 +11,17 @@ class AcceptInterestRequest(BaseModel):
     responder_id: int
 
 
+class DirectExchangeRequest(BaseModel):
+    target_user_id: int
+
+
 class ExchangeOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     initiator_id: int
+    partner_id: int | None = None
+    partner_name: str | None = None
     listing_id: int | None
     status: ExchangeStatus
     is_chain: bool
@@ -23,6 +29,10 @@ class ExchangeOut(BaseModel):
     completed_at: datetime | None
     completed_by_initiator: bool
     completed_by_partner: bool
+    # Двухстороннее подтверждение начала
+    started_by_initiator: bool
+    started_by_partner: bool
+    started_at: datetime | None
 
 
 class ExchangeStatusUpdate(BaseModel):
@@ -55,6 +65,7 @@ class ReviewOut(BaseModel):
     id: int
     exchange_id: int
     reviewer_id: int
+    reviewer_name: str | None = None
     reviewed_id: int
     rating: int
     comment: str | None

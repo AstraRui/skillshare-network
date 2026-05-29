@@ -1,8 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Briefcase, Plus, Search, X } from 'lucide-react'
 import { api } from '../api/client.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import LoadingHint from '../components/ui/LoadingHint.jsx'
+
+// Простой debounce без лишних зависимостей
+function useDebounce(value, delay) {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+  return debounced
+}
 
 // ── Модалка создания объявления ───────────────────────────────────────────────
 function CreateListingModal({ onClose, onCreated }) {
@@ -139,13 +150,29 @@ function CreateListingModal({ onClose, onCreated }) {
 
 function DealsPage() {
   const { isAuthenticated, userId, openAuthModal } = useAuth()
+  const location = useLocation()
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(false)
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
+
+  // Фильтрация с debounce через useMemo
+  const filteredListings = useMemo(() => {
+    if (!debouncedSearch.trim()) return listings
+    const term = debouncedSearch.toLowerCase()
+    return listings.filter(
+      (l) =>
+        l.title?.toLowerCase().includes(term) ||
+        l.offering_summary?.toLowerCase().includes(term) ||
+        l.seeking_summary?.toLowerCase().includes(term) ||
+        l.description?.toLowerCase().includes(term)
+    )
+  }, [listings, debouncedSearch])
   const [error, setError] = useState(null)
   const [selectedListing, setSelectedListing] = useState(null)
   const [respondMessage, setRespondMessage] = useState('')
   const [responding, setResponding] = useState(false)
-  const [createOpen, setCreateOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(() => Boolean(location.state?.openCreate))
 
   const loadListings = async () => {
     setLoading(true)
@@ -228,6 +255,8 @@ function DealsPage() {
             <input
               type="search"
               placeholder="Поиск по навыкам, названию..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-sm text-white outline-none ring-indigo-500 focus:ring-1"
             />
           </div>
@@ -237,19 +266,23 @@ function DealsPage() {
           <div className="py-12">
             <LoadingHint label="Загружаем объявления…" />
           </div>
-        ) : listings.length === 0 ? (
+        ) : filteredListings.length === 0 ? (
           <div className="flex min-h-[300px] items-center justify-center">
             <div className="text-center">
               <Briefcase className="mx-auto mb-4 text-slate-700" size={48} />
-              <p className="text-sm font-bold text-slate-400">Объявлений пока нет</p>
+              <p className="text-sm font-bold text-slate-400">
+                {listings.length === 0 ? 'Объявлений пока нет' : 'Ничего не найдено'}
+              </p>
               <p className="mt-2 text-xs text-slate-600">
-                Создайте первое объявление и начните обмениваться навыками.
+                {listings.length === 0
+                  ? 'Создайте первое объявление и начните обмениваться навыками.'
+                  : 'Попробуйте изменить поисковый запрос.'}
               </p>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {listings.map((listing) => {
+            {filteredListings.map((listing) => {
               const isOwn = listing.author_id === userId
               return (
                 <div

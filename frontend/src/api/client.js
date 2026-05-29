@@ -26,8 +26,9 @@ export async function request(path, options = {}) {
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (!skipAuth) {
     const token = localStorage.getItem('ssn_token')
-    const id = token ? jwtUserId(token) : null
-    if (id != null) headers['X-User-Id'] = String(id)
+    if (token && token !== 'null' && token !== 'undefined') {
+      headers['Authorization'] = `Bearer ${token}`
+    }
   }
   const res = await fetch(`${API_PREFIX}${path}`, {
     method,
@@ -35,6 +36,13 @@ export async function request(path, options = {}) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
   const data = await parseBody(res)
+  if (res.status === 401) {
+    // Токен невалиден или истек - очищаем и перезагружаем
+    localStorage.removeItem('ssn_token')
+    localStorage.removeItem('ssn_email')
+    window.location.reload()
+    return null
+  }
   if (!res.ok) throw new Error(errorMessage(data, res))
   return data
 }
@@ -55,6 +63,8 @@ export const api = {
   // ── Users ─────────────────────────────────────────────────────────────────
   getMe: () => request('/users/me'),
   updateMe: (payload) => request('/users/me', { method: 'PATCH', body: payload }),
+  changePassword: (current_password, new_password) =>
+    request('/users/me/password', { method: 'PATCH', body: { current_password, new_password } }),
   getMySkills: () => request('/users/me/skills'),
   updateMySkills: (payload) => request('/users/me/skills', { method: 'PUT', body: payload }),
 
@@ -79,13 +89,24 @@ export const api = {
 
   // ── Exchanges ─────────────────────────────────────────────────────────────
   myExchanges: () => request('/exchanges'),
+  startDirectExchange: (targetUserId) =>
+    request('/exchanges/direct', { method: 'POST', body: { target_user_id: targetUserId } }),
   acceptInterest: (listingId, responderId) =>
     request(`/exchanges/listing/${listingId}/accept-interest`, {
       method: 'POST',
       body: { responder_id: responderId },
     }),
+  updateExchangeStatus: (exchangeId, to) =>
+    request(`/exchanges/${exchangeId}/status`, { method: 'POST', body: { to } }),
+  requestStartExchange: (exchangeId) =>
+    request(`/exchanges/${exchangeId}/request-start`, { method: 'POST' }),
   confirmExchangeCompletion: (exchangeId) =>
     request(`/exchanges/${exchangeId}/confirm-completion`, { method: 'POST' }),
+
+  exchangeReviews: (exchangeId) => request(`/exchanges/${exchangeId}/reviews`),
+  submitReview: (exchangeId, rating, comment) =>
+    request(`/exchanges/${exchangeId}/reviews`, { method: 'POST', body: { rating, comment: comment || null } }),
+  myReceivedReviews: () => request('/users/me/reviews'),
 
   // ── Chat ──────────────────────────────────────────────────────────────────
   // Сообщения чата идут через /exchanges/{id}/messages (exchange_id, не chat_id)
@@ -97,4 +118,14 @@ export const api = {
 
   // ── Matches ───────────────────────────────────────────────────────────────
   matches: () => request('/matches'),
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  adminExchanges: (params = {}) => {
+    const q = new URLSearchParams()
+    for (const [k, v] of Object.entries(params)) {
+      if (v != null && v !== '') q.set(k, String(v))
+    }
+    const s = q.toString()
+    return request(s ? `/admin/exchanges?${s}` : '/admin/exchanges')
+  },
 }
