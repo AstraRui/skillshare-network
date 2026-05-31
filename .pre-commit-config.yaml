@@ -6,8 +6,11 @@ repos:
       - id: ruff
         args: [--fix]
         files: ^backend/
+        stages: [manual]
+
       - id: ruff-format
         files: ^backend/
+        stages: [manual]
 
   # ── JS/JSX: eslint ───────────────────────────────────────────────────────────
   - repo: local

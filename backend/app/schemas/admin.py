@@ -51,10 +51,14 @@ class AdminExchangeOut(BaseModel):
 
     id: int
     initiator_id: int
+    initiator_name: str | None = None
+    partner_id: int | None = None
+    partner_name: str | None = None
     listing_id: int | None
     status: ExchangeStatus
     is_chain: bool
     created_at: datetime
+    started_at: datetime | None = None
     completed_at: datetime | None
     completed_by_initiator: bool
     completed_by_partner: bool
@@ -80,8 +84,6 @@ class AdminMessageOut(BaseModel):
 
     id: int
     chat_id: int
-    exchange_id: int | None
-    task_id: int | None
     sender_id: int
     content: str | None
     media_url: str | None

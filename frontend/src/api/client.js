@@ -44,8 +44,9 @@ export async function request(path, options = {}) {
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (!skipAuth) {
     const token = localStorage.getItem('ssn_token')
-    const id = token ? jwtUserId(token) : null
-    if (id != null) headers['X-User-Id'] = String(id)
+    if (token && token !== 'null' && token !== 'undefined') {
+      headers['Authorization'] = `Bearer ${token}`
+    }
   }
   const res = await fetch(`${API_PREFIX}${path}`, {
     method,
@@ -53,6 +54,13 @@ export async function request(path, options = {}) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
   const data = await parseBody(res)
+  if (res.status === 401) {
+    // Токен невалиден или истек - очищаем и перезагружаем
+    localStorage.removeItem('ssn_token')
+    localStorage.removeItem('ssn_email')
+    window.location.reload()
+    return null
+  }
   if (!res.ok) throw new Error(errorMessage(data, res))
   if (res.status === 204) return null
   return data
@@ -60,6 +68,8 @@ export async function request(path, options = {}) {
 
 export const api = {
   health: () => request('/health'),
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
   login: (email, password) =>
     request('/auth/login', {
       method: 'POST',
@@ -68,39 +78,74 @@ export const api = {
     }),
   register: (payload) =>
     request('/auth/register', { method: 'POST', body: payload, skipAuth: true }),
-  user: (userId) => request(`/users/${userId}`, { skipAuth: true }),
-  myProfile: () => request('/users/me'),
-  updateMyProfile: (payload) => request('/users/me', { method: 'PATCH', body: payload }),
-  mySkills: () => request('/users/me/skills'),
-  addOfferedSkill: (payload) =>
-    request('/users/me/skills/offered', { method: 'POST', body: payload }),
-  addWantedSkill: (payload) =>
-    request('/users/me/skills/wanted', { method: 'POST', body: payload }),
-  removeOfferedSkill: (skillId) =>
-    request(`/users/me/skills/offered/${skillId}`, { method: 'DELETE' }),
-  removeWantedSkill: (skillId) =>
-    request(`/users/me/skills/wanted/${skillId}`, { method: 'DELETE' }),
-  myExchanges: () => request('/exchanges'),
-  updateExchangeStatus: (exchangeId, to) =>
-    request(`/exchanges/${exchangeId}/status`, { method: 'POST', body: { to } }),
-  exchangeMessages: (exchangeId) => request(`/exchanges/${exchangeId}/messages`),
-  postExchangeMessage: (exchangeId, content) =>
-    request(`/exchanges/${exchangeId}/messages`, {
-      method: 'POST',
-      body: { content },
-    }),
-  confirmExchangeCompletion: (exchangeId) =>
-    request(`/exchanges/${exchangeId}/confirm-completion`, { method: 'POST' }),
-  myExchangeReview: (exchangeId) => request(`/exchanges/${exchangeId}/reviews/mine`),
-  submitExchangeReview: (exchangeId, payload) =>
-    request(`/exchanges/${exchangeId}/reviews`, { method: 'POST', body: payload }),
+
+  // ── Users ─────────────────────────────────────────────────────────────────
+  getMe: () => request('/users/me'),
+  updateMe: (payload) => request('/users/me', { method: 'PATCH', body: payload }),
+  changePassword: (current_password, new_password) =>
+    request('/users/me/password', { method: 'PATCH', body: { current_password, new_password } }),
+  getMySkills: () => request('/users/me/skills'),
+  updateMySkills: (payload) => request('/users/me/skills', { method: 'PUT', body: payload }),
+
+  // ── Skills ────────────────────────────────────────────────────────────────
+  skills: () => request('/skills'),
+  skillCategories: () => request('/skills/categories'),
+  createSkill: (name) => request('/skills', { method: 'POST', body: { name } }),
+
+  // ── Listings ──────────────────────────────────────────────────────────────
   listings: (params = {}) => {
     const q = new URLSearchParams()
     for (const [k, v] of Object.entries(params)) {
       if (v != null && v !== '') q.set(k, String(v))
     }
     const s = q.toString()
-    return request(s ? `/listings?${s}` : '/listings', { skipAuth: true })
+    return request(s ? `/listings?${s}` : '/listings')
+  },
+  createListing: (payload) => request('/listings', { method: 'POST', body: payload }),
+  respondToListing: (listingId, message = null) =>
+    request(`/listings/${listingId}/interests`, { method: 'POST', body: { message } }),
+  listingInterests: (listingId) => request(`/listings/${listingId}/interests`),
+
+  // ── Exchanges ─────────────────────────────────────────────────────────────
+  myExchanges: () => request('/exchanges'),
+  startDirectExchange: (targetUserId) =>
+    request('/exchanges/direct', { method: 'POST', body: { target_user_id: targetUserId } }),
+  acceptInterest: (listingId, responderId) =>
+    request(`/exchanges/listing/${listingId}/accept-interest`, {
+      method: 'POST',
+      body: { responder_id: responderId },
+    }),
+  updateExchangeStatus: (exchangeId, to) =>
+    request(`/exchanges/${exchangeId}/status`, { method: 'POST', body: { to } }),
+  requestStartExchange: (exchangeId) =>
+    request(`/exchanges/${exchangeId}/request-start`, { method: 'POST' }),
+  confirmExchangeCompletion: (exchangeId) =>
+    request(`/exchanges/${exchangeId}/confirm-completion`, { method: 'POST' }),
+
+  exchangeReviews: (exchangeId) => request(`/exchanges/${exchangeId}/reviews`),
+  submitReview: (exchangeId, rating, comment) =>
+    request(`/exchanges/${exchangeId}/reviews`, { method: 'POST', body: { rating, comment: comment || null } }),
+  myReceivedReviews: () => request('/users/me/reviews'),
+
+  // ── Chat ──────────────────────────────────────────────────────────────────
+  // Сообщения чата идут через /exchanges/{id}/messages (exchange_id, не chat_id)
+  chatMessages: (exchangeId) => request(`/exchanges/${exchangeId}/messages`),
+  sendChatMessage: (exchangeId, content) =>
+    request(`/exchanges/${exchangeId}/messages`, { method: 'POST', body: { content } }),
+  // Получить chat_id по exchange_id (нужен для WebSocket)
+  getChatByExchange: (exchangeId) => request(`/chat/exchanges/${exchangeId}`),
+
+  // ── Matches ───────────────────────────────────────────────────────────────
+  matches: () => request('/matches'),
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  adminExchanges: (params = {}) => {
+    const q = new URLSearchParams()
+    for (const [k, v] of Object.entries(params)) {
+      if (v != null && v !== '') q.set(k, String(v))
+    }
+    const s = q.toString()
+    return request(s ? `/admin/exchanges?${s}` : '/admin/exchanges')
   },
   createListing: (payload) => request('/listings', { method: 'POST', body: payload }),
   updateListing: (listingId, payload) =>

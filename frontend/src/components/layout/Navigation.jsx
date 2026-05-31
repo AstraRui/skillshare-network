@@ -3,6 +3,7 @@ import {
   BarChart3,
   LayoutGrid,
   MessageSquare,
+  Shield,
   Sparkles,
   User,
   Zap,
@@ -10,7 +11,10 @@ import {
 import { useAuth } from '../../context/AuthContext.jsx'
 import { truncateEmail } from '../../lib/userDisplay.js'
 
-const guestNavItems = [{ to: '/deals', label: 'Заказы', Icon: LayoutGrid }]
+const guestNavItems = [
+  { to: '/', label: 'Обзор', Icon: BarChart3, end: true },
+  { to: '/deals', label: 'Объявления', Icon: LayoutGrid },
+]
 
 const authNavItems = [
   { to: '/', label: 'Обзор', Icon: BarChart3, end: true },
@@ -24,8 +28,11 @@ const profileButtonClass =
   'flex shrink-0 items-center space-x-3 rounded-xl border border-white/10 bg-white/5 p-1.5 transition hover:bg-white/10'
 
 function Navigation() {
-  const { isAuthenticated, userInitials, email, openAuthModal } = useAuth()
-  const navItems = isAuthenticated ? authNavItems : guestNavItems
+  const { isAuthenticated, isAdmin, userInitials, email, openAuthModal } = useAuth()
+  const navItems = [
+    ...(isAuthenticated ? authNavItems : guestNavItems),
+    ...(isAdmin ? [{ to: '/admin', label: 'Admin', Icon: Shield }] : []),
+  ]
 
   return (
     <nav className="fixed left-0 right-0 top-0 z-50 px-4 py-4 md:px-6" aria-label="Главная навигация">

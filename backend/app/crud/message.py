@@ -42,6 +42,7 @@ async def create_chat_message(
 
 async def edit_message(db: AsyncSession, message: Message, content: str) -> Message:
     message.content = content
+    message.edited_at = datetime.now(UTC)
     await db.flush()
     await db.refresh(message)
     return message

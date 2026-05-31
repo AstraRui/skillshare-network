@@ -13,6 +13,22 @@ function base64UrlDecode(segment) {
 
 /**
  * @param {string | null | undefined} token
+ * @returns {string | null}
+ */
+export function jwtUserRole(token) {
+  if (!token || typeof token !== 'string') return null
+  try {
+    const parts = token.split('.')
+    if (parts.length < 2) return null
+    const payload = JSON.parse(base64UrlDecode(parts[1]))
+    return payload.role ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * @param {string | null | undefined} token
  * @returns {number | null}
  */
 export function jwtUserId(token) {

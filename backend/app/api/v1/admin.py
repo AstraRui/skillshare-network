@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
+from app.models.exchange import ExchangeStatus
 from app.models.user import User
 from app.policies.admin import get_current_admin
 from app.schemas.admin import (
@@ -31,6 +32,7 @@ CurrentAdmin = Annotated[User, Depends(get_current_admin)]
 async def get_admin_users(
     db: DbSession,
     admin: CurrentAdmin,
+    # пагинация, лимит выданных пользователей на одной странице = 20, пропускать по умолчанию 0, ge = больше либо равно, le = меньше либо равно
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> list[AdminUserOut]:
@@ -54,10 +56,7 @@ async def patch_admin_user_status(
     admin: CurrentAdmin,
 ) -> AdminUserOut:
     return await admin_service.update_user_status(
-        db=db,
-        admin=admin,
-        user_id=user_id,
-        payload=payload,
+        db=db, admin=admin, user_id=user_id, payload=payload
     )
 
 
@@ -68,10 +67,7 @@ async def block_admin_user(
     admin: CurrentAdmin,
 ) -> None:
     await admin_service.update_user_status(
-        db=db,
-        admin=admin,
-        user_id=user_id,
-        payload=UserStatusPatch(is_deleted=True),
+        db=db, admin=admin, user_id=user_id, payload=UserStatusPatch(is_deleted=True)
     )
 
 
@@ -93,10 +89,7 @@ async def patch_admin_listing_status(
     admin: CurrentAdmin,
 ) -> AdminListingOut:
     return await admin_service.update_listing_status(
-        db=db,
-        admin=admin,
-        listing_id=listing_id,
-        payload=payload,
+        db=db, admin=admin, listing_id=listing_id, payload=payload
     )
 
 
@@ -115,8 +108,11 @@ async def get_admin_exchanges(
     admin: CurrentAdmin,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    status: ExchangeStatus | None = Query(default=None),
 ) -> list[AdminExchangeOut]:
-    return await admin_service.get_exchanges(db=db, admin=admin, limit=limit, offset=offset)
+    return await admin_service.get_exchanges(
+        db=db, admin=admin, limit=limit, offset=offset, status_filter=status
+    )
 
 
 @router.patch("/exchanges/{exchange_id}/status", response_model=AdminExchangeOut)
@@ -127,10 +123,7 @@ async def patch_admin_exchange_status(
     admin: CurrentAdmin,
 ) -> AdminExchangeOut:
     return await admin_service.update_exchange_status(
-        db=db,
-        admin=admin,
-        exchange_id=exchange_id,
-        payload=payload,
+        db=db, admin=admin, exchange_id=exchange_id, payload=payload
     )
 
 
@@ -162,11 +155,7 @@ async def get_admin_chat_messages(
     offset: int = Query(default=0, ge=0),
 ) -> list[AdminMessageOut]:
     return await admin_service.get_chat_messages(
-        db=db,
-        admin=admin,
-        chat_id=chat_id,
-        limit=limit,
-        offset=offset,
+        db=db, admin=admin, chat_id=chat_id, limit=limit, offset=offset
     )
 
 

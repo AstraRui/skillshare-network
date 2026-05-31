@@ -18,16 +18,7 @@ async def get_current_admin(
     db: DbSession,
     authorization: str | None = Header(default=None, alias="Authorization"),
 ) -> User:
-    """
-    Guard для всех admin endpoints.
-
-    Защита:
-    1. Проверяет наличие Bearer JWT.
-    2. Декодирует JWT через SSN_SECRET_KEY.
-    3. Загружает пользователя из БД.
-    4. Проверяет, что пользователь не удалён.
-    5. Проверяет role == admin.
-    """
+    # проверяем что заголовок Authorization есть и начинается с Bearer
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -45,7 +36,6 @@ async def get_current_admin(
         ) from exc
 
     user_id = payload.get("sub")
-
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -53,12 +43,8 @@ async def get_current_admin(
         )
 
     user = await db.scalar(
-        select(User).where(
-            User.id == int(user_id),
-            User.is_deleted.is_(False),
-        )
+        select(User).where(User.id == int(user_id), User.is_deleted.is_(False))
     )
-
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -4,81 +4,21 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_session
 from app.models.listing import Listing, ListingInterest, ListingInterestStatus, ListingStatus
 from app.models.user import User
+from app.schemas.listing import (
+    ListingCreate,
+    ListingInterestCreate,
+    ListingInterestOut,
+    ListingOut,
+)
 
 router = APIRouter(prefix="/listings", tags=["listings"])
-
-
-class ListingCreate(BaseModel):
-    title: str
-    description: str | None = None
-    offering_summary: str
-    seeking_summary: str
-    status: ListingStatus = ListingStatus.published
-
-
-class ListingUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    offering_summary: str | None = None
-    seeking_summary: str | None = None
-    status: ListingStatus | None = None
-
-
-class ListingOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    author_id: int
-    author_full_name: str | None = None
-    title: str
-    description: str | None
-    offering_summary: str
-    seeking_summary: str
-    status: ListingStatus
-    created_at: datetime
-
-
-def listing_to_out(listing: Listing, author_full_name: str | None = None) -> ListingOut:
-    return ListingOut(
-        id=listing.id,
-        author_id=listing.author_id,
-        author_full_name=author_full_name,
-        title=listing.title,
-        description=listing.description,
-        offering_summary=listing.offering_summary,
-        seeking_summary=listing.seeking_summary,
-        status=listing.status,
-        created_at=listing.created_at,
-    )
-
-
-class ListingInterestCreate(BaseModel):
-    message: str | None = None
-
-
-class ListingInterestOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    listing_id: int
-    responder_id: int
-    message: str | None
-    status: ListingInterestStatus
-    created_at: datetime
-
-
-class ListingInterestDetailOut(ListingInterestOut):
-    listing_title: str
-    responder_full_name: str | None = None
-
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -226,6 +166,28 @@ async def get_listings(
     stmt = stmt.order_by(Listing.created_at.desc())
     rows = await db.execute(stmt)
     return [listing_to_out(listing, full_name) for listing, full_name in rows.all()]
+
+
+@router.get(
+    "/{listing_id}/interests",
+    response_model=list[ListingInterestOut],
+)
+async def get_listing_interests(
+    listing_id: int,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> list[ListingInterest]:
+    listing = await db.get(Listing, listing_id)
+    if listing is None:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing.author_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only listing author can view interests")
+    result = await db.scalars(
+        select(ListingInterest)
+        .where(ListingInterest.listing_id == listing_id)
+        .order_by(ListingInterest.created_at.desc())
+    )
+    return list(result)
 
 
 @router.post(

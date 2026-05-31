@@ -1,181 +1,190 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy import func, or_, select
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_session
-from app.models.exchange import Exchange
-from app.models.listing import Listing, ListingInterest, ListingInterestStatus
-from app.models.skill import UserSkillsOffered, UserSkillsWanted
+from app.models.skill import Skill, UserSkillsOffered, UserSkillsWanted
 from app.models.user import User
-from app.schemas.profile import (
-    MyProfileOut,
-    UserProfileUpdate,
-    UserSkillAdd,
-    UserSkillOut,
-    UserSkillsOut,
-)
-from app.services.user_skills import get_or_create_skill, load_user_skills
+from app.models.review import Review
+from app.schemas.exchange import ReviewOut
+from app.schemas.user import PasswordChangeRequest, UserProfile, UserSkillsPayload, UserUpdate
+from app.services.auth import hash_password, verify_password
+from app.services.user import cancel_user_exchanges
 
 router = APIRouter(prefix="/users", tags=["users"])
-
-
-class PublicUserOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    full_name: str | None
-    email: str | None = None
-
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-async def _count_exchanges(db: AsyncSession, user_id: int) -> int:
-    count = await db.scalar(
-        select(func.count(Exchange.id)).where(
-            or_(
-                Exchange.initiator_id == user_id,
-                Exchange.listing_id.in_(
-                    select(ListingInterest.listing_id).where(
-                        ListingInterest.responder_id == user_id,
-                        ListingInterest.status == ListingInterestStatus.accepted,
-                    )
-                ),
+@router.get("/me", response_model=UserProfile)
+async def get_me(current_user: CurrentUser) -> User:
+    """Возвращает профиль текущего авторизованного пользователя."""
+    return current_user
+
+
+@router.patch("/me", response_model=UserProfile)
+async def update_me(
+    payload: UserUpdate,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> User:
+    """Обновляет имя и/или аватар текущего пользователя."""
+    if payload.full_name is not None:
+        current_user.full_name = payload.full_name.strip() or None
+    if payload.avatar_url is not None:
+        current_user.avatar_url = payload.avatar_url.strip() or None
+    await db.flush()
+    await db.refresh(current_user)
+    return current_user
+
+
+@router.put("/me/skills")
+async def update_my_skills(
+    payload: UserSkillsPayload,
+    db: DbSession,
+    current_user: CurrentUser,
+) -> dict:
+    """
+    Полностью заменяет навыки пользователя.
+    offered: [{skill_id, level}]
+    wanted:  [{skill_id, desired_level}]
+    """
+    # Проверяем что все skill_id существуют
+    all_ids = {s.skill_id for s in payload.offered} | {s.skill_id for s in payload.wanted}
+    if all_ids:
+        existing = set(
+            await db.scalars(
+                select(Skill.id).where(Skill.id.in_(all_ids), Skill.is_deleted.is_(False))
             )
         )
-    )
-    return int(count or 0)
+        missing = all_ids - existing
+        if missing:
+            raise HTTPException(status_code=400, detail=f"Unknown skill ids: {sorted(missing)}")
 
-
-async def _count_listings(db: AsyncSession, user_id: int) -> int:
-    count = await db.scalar(select(func.count(Listing.id)).where(Listing.author_id == user_id))
-    return int(count or 0)
-
-
-def _profile_out(user: User, exchanges_count: int, listings_count: int) -> MyProfileOut:
-    return MyProfileOut(
-        id=user.id,
-        email=user.email,
-        full_name=user.full_name,
-        rating=float(user.rating),
-        exchanges_count=exchanges_count,
-        listings_count=listings_count,
-    )
-
-
-@router.get("/me", response_model=MyProfileOut)
-async def get_my_profile(db: DbSession, current_user: CurrentUser) -> MyProfileOut:
-    exchanges_count = await _count_exchanges(db, current_user.id)
-    listings_count = await _count_listings(db, current_user.id)
-    return _profile_out(current_user, exchanges_count, listings_count)
-
-
-@router.patch("/me", response_model=MyProfileOut)
-async def update_my_profile(
-    payload: UserProfileUpdate,
-    db: DbSession,
-    current_user: CurrentUser,
-) -> MyProfileOut:
-    if payload.full_name is not None:
-        current_user.full_name = payload.full_name
-
-    exchanges_count = await _count_exchanges(db, current_user.id)
-    listings_count = await _count_listings(db, current_user.id)
-    return _profile_out(current_user, exchanges_count, listings_count)
-
-
-@router.get("/me/skills", response_model=UserSkillsOut)
-async def get_my_skills(db: DbSession, current_user: CurrentUser) -> UserSkillsOut:
-    offered_rows, wanted_rows = await load_user_skills(db, current_user.id)
-    return UserSkillsOut(
-        offered=[
-            UserSkillOut(skill_id=skill_id, name=name, level=level)
-            for skill_id, name, level in offered_rows
-        ],
-        wanted=[
-            UserSkillOut(skill_id=skill_id, name=name, desired_level=level)
-            for skill_id, name, level in wanted_rows
-        ],
-    )
-
-
-@router.post("/me/skills/offered", response_model=UserSkillOut, status_code=201)
-async def add_offered_skill(
-    payload: UserSkillAdd,
-    db: DbSession,
-    current_user: CurrentUser,
-) -> UserSkillOut:
-    skill = await get_or_create_skill(db, payload.name)
-    existing = await db.get(UserSkillsOffered, (current_user.id, skill.id))
-    if existing is not None:
-        raise HTTPException(status_code=409, detail="Этот навык уже в списке «Я предлагаю»")
-
-    db.add(
-        UserSkillsOffered(
-            user_id=current_user.id,
-            skill_id=skill.id,
-            level=payload.level,
+    # Удаляем старые записи
+    old_offered = list(
+        await db.scalars(
+            select(UserSkillsOffered).where(UserSkillsOffered.user_id == current_user.id)
         )
     )
-    await db.flush()
-    return UserSkillOut(skill_id=skill.id, name=skill.name, level=payload.level)
+    for row in old_offered:
+        await db.delete(row)
 
-
-@router.post("/me/skills/wanted", response_model=UserSkillOut, status_code=201)
-async def add_wanted_skill(
-    payload: UserSkillAdd,
-    db: DbSession,
-    current_user: CurrentUser,
-) -> UserSkillOut:
-    skill = await get_or_create_skill(db, payload.name)
-    existing = await db.get(UserSkillsWanted, (current_user.id, skill.id))
-    if existing is not None:
-        raise HTTPException(status_code=409, detail="Этот навык уже в списке «Я ищу»")
-
-    db.add(
-        UserSkillsWanted(
-            user_id=current_user.id,
-            skill_id=skill.id,
-            desired_level=payload.desired_level,
+    old_wanted = list(
+        await db.scalars(
+            select(UserSkillsWanted).where(UserSkillsWanted.user_id == current_user.id)
         )
     )
+    for row in old_wanted:
+        await db.delete(row)
+
     await db.flush()
-    return UserSkillOut(skill_id=skill.id, name=skill.name, desired_level=payload.desired_level)
+
+    # Добавляем новые
+    for s in payload.offered:
+        db.add(UserSkillsOffered(user_id=current_user.id, skill_id=s.skill_id, level=s.level))
+    for s in payload.wanted:
+        db.add(
+            UserSkillsWanted(
+                user_id=current_user.id, skill_id=s.skill_id, desired_level=s.desired_level
+            )
+        )
+
+    await db.flush()
+    return {"ok": True}
 
 
-@router.delete("/me/skills/offered/{skill_id}", status_code=204)
-async def remove_offered_skill(
-    skill_id: int,
+@router.patch("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    payload: PasswordChangeRequest,
     db: DbSession,
     current_user: CurrentUser,
 ) -> None:
-    row = await db.get(UserSkillsOffered, (current_user.id, skill_id))
-    if row is None:
-        raise HTTPException(status_code=404, detail="Навык не найден")
-    await db.delete(row)
+    """Смена пароля текущего пользователя."""
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Неверный текущий пароль")
+    current_user.password_hash = hash_password(payload.new_password)
+    await db.flush()
 
 
-@router.delete("/me/skills/wanted/{skill_id}", status_code=204)
-async def remove_wanted_skill(
-    skill_id: int,
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_me(
     db: DbSession,
     current_user: CurrentUser,
 ) -> None:
-    row = await db.get(UserSkillsWanted, (current_user.id, skill_id))
-    if row is None:
-        raise HTTPException(status_code=404, detail="Навык не найден")
-    await db.delete(row)
+    """Мягкое удаление пользователя с отменой всех активных сделок."""
+    await cancel_user_exchanges(db, current_user.id)
+
+    current_user.is_deleted = True
+    current_user.deleted_at = datetime.now(UTC)
+    await db.flush()
 
 
-@router.get("/{user_id}", response_model=PublicUserOut)
-async def get_user(user_id: int, db: DbSession) -> PublicUserOut:
-    user = await db.get(User, user_id)
-    if user is None or user.is_deleted:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
-    return PublicUserOut(id=user.id, full_name=user.full_name, email=None)
+@router.get("/me/reviews", response_model=list[ReviewOut])
+async def get_my_reviews(
+    db: DbSession,
+    current_user: CurrentUser,
+) -> list[ReviewOut]:
+    """Отзывы полученные текущим пользователем."""
+    reviews = list(
+        await db.scalars(
+            select(Review)
+            .where(
+                Review.reviewed_id == current_user.id,
+                Review.is_deleted.is_(False),
+                Review.is_hidden.is_(False),
+            )
+            .order_by(Review.id.desc())
+            .limit(20)
+        )
+    )
+    reviewer_ids = {r.reviewer_id for r in reviews}
+    name_map: dict[int, str | None] = {}
+    if reviewer_ids:
+        rows = list(
+            await db.execute(select(User.id, User.full_name).where(User.id.in_(reviewer_ids)))
+        )
+        name_map = {r.id: r.full_name for r in rows}
+
+    return [
+        ReviewOut.model_validate(r).model_copy(update={"reviewer_name": name_map.get(r.reviewer_id)})
+        for r in reviews
+    ]
+
+
+@router.get("/me/skills")
+async def get_my_skills(
+    db: DbSession,
+    current_user: CurrentUser,
+) -> dict:
+    """Возвращает текущие навыки пользователя."""
+    offered_rows = list(
+        await db.execute(
+            select(UserSkillsOffered, Skill)
+            .join(Skill, Skill.id == UserSkillsOffered.skill_id)
+            .where(UserSkillsOffered.user_id == current_user.id)
+        )
+    )
+    wanted_rows = list(
+        await db.execute(
+            select(UserSkillsWanted, Skill)
+            .join(Skill, Skill.id == UserSkillsWanted.skill_id)
+            .where(UserSkillsWanted.user_id == current_user.id)
+        )
+    )
+    return {
+        "offered": [
+            {"skill_id": r.skill_id, "skill_name": s.name, "level": r.level}
+            for r, s in offered_rows
+        ],
+        "wanted": [
+            {"skill_id": r.skill_id, "skill_name": s.name, "desired_level": r.desired_level}
+            for r, s in wanted_rows
+        ],
+    }

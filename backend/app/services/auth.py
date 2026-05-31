@@ -6,6 +6,7 @@ import bcrypt
 import jwt
 from fastapi import HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.settings import settings
@@ -42,7 +43,10 @@ async def register_user(db: AsyncSession, data: UserRegister) -> User:
         email=data.email, password_hash=hash_password(data.password), full_name=data.full_name
     )
     db.add(user)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Email уже зарегистрирован")
     return user
 
 
