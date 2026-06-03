@@ -23,7 +23,7 @@ WebSocket API — для real-time чатов.
 
 
 Поток данных (пример создания сделки)
-Пользователь А публикует объявление через React-форму → POST /api/listings.
+Пользователь А публикует объявление через React-форму → POST /api/v1/listings.
 
 Пользователь Б отправляет отклик → POST /api/listings/{id}/interests.
 
@@ -47,5 +47,7 @@ UI-компоненты	TailwindCSS + FlyonUI
 Real-time	WebSockets (FastAPI + Redis pub/sub)
 Аутентификация	JWT (secure cookies / Bearer)
 Линтинг и форматирование	Ruff (бэкенд), ESLint + Prettier (фронтенд)
+Безопасность зависимостей	pip-audit (Python), npm audit (frontend)
+SAST (бэкенд)	Bandit
 Контейнеризация	Docker, Docker Compose
 CI/CD	GitHub Actions

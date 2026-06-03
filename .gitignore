@@ -52,6 +52,9 @@ htmlcov/
 # Ruff
 .ruff_cache/
 
+# Локальный кэш pip-audit (make security)
+.cache/
+
 # Alembic
 alembic/versions/*.pyc
 

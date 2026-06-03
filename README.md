@@ -16,7 +16,9 @@
 | --- | --- | --- |
 | Backend | Python 3.12 + FastAPI | Максимальная скорость, асинхронность, мощная типизация (Pydantic) |
 | Backend lint / format | Ruff | Заменяет Flake8, Black и Isort |
+| Backend security | pip-audit + Bandit | Уязвимости в пакетах и базовый SAST |
 | Frontend lint / format | ESLint + Prettier | Проверка React-кода и единый стиль |
+| Frontend security | npm audit | Уязвимости в npm-зависимостях |
 | Frontend | React + Vite | Современный компонентный подход, быстрая разработка |
 | UI-компоненты | TailwindCSS | Профессиональный UI с минимальными стилями |
 | ORM | SQLAlchemy 2.0 + Alembic | Работа со сложным SQL и рекурсиями для матчинга цепочек |
@@ -40,12 +42,17 @@
 ## Структура репозитория
 
 - `backend/`: FastAPI-приложение, DB слой и миграции Alembic
-- `frontend/`: React-приложение (Vite + TailwindCSS)
-  - `frontend/src/`: страницы, компоненты, API-клиент
-  - `frontend/src/admin/`: UI админ-панели (React)
-- `Documentation/`: описание, архитектура, диаграммы, инструкции по секретам
+  - `backend/app/api/v1/`: HTTP API (единая точка `/api/v1/...`)
+  - `backend/app/models|schemas|services|crud/`: слои приложения
+- `frontend/`: SPA на React (Vite + TailwindCSS)
+  - `frontend/src/pages/`: экраны (в т.ч. админка `/admin`)
+  - `frontend/src/components/`: UI по доменам (auth, deals, layout, …)
+  - `frontend/src/api/`: HTTP-клиент к API
+- `Documentation/`: описание, архитектура, [инструкции для разработчиков](./Documentation/DEVELOPMENT.md)
 - `secrets/`: локальные файлы для Docker prod (не в git)
 - `docker-compose.yml`: PostgreSQL + backend
+
+Подробнее о качестве кода и CI: [Documentation/DEVELOPMENT.md](./Documentation/DEVELOPMENT.md).
 
 ## Быстрый старт (локально)
 
@@ -58,10 +65,12 @@ uv run uvicorn app.main:app --reload
 ```
 
 Открыть:
-- `http://localhost:8000/` (SSR страница)
-- `http://localhost:8000/api/health` (healthcheck)
+- `http://localhost:8000/docs` (Swagger UI; `/` редиректит сюда)
+- `http://localhost:8000/api/v1/health` (healthcheck)
 
-### Проверка и форматирование кода
+Фронтенд отдельно: `cd frontend && npm ci && npm run dev` → `http://localhost:5173`
+
+### Качество кода и безопасность
 
 Установка инструментов (один раз):
 
@@ -87,16 +96,19 @@ make format
 make lint-fix
 ```
 
-Аудит уязвимостей Python-зависимостей:
+Проверка уязвимостей в зависимостях и базовый SAST:
 
 ```bash
-make audit-deps
+make security
+# то же: make audit-deps
 ```
 
-| Слой | Линтер | Форматтер |
-| --- | --- | --- |
-| Backend (Python 3.12) | [Ruff](https://docs.astral.sh/ruff/) (`ruff check`) | Ruff (`ruff format`) |
-| Frontend (React + Vite) | [ESLint](https://eslint.org/) (`npm run lint`) | [Prettier](https://prettier.io/) (`npm run format`) |
+| Слой | Линтер / формат | Безопасность зависимостей | SAST |
+| --- | --- | --- | --- |
+| Backend | [Ruff](https://docs.astral.sh/ruff/) check + format | [pip-audit](https://pypi.org/project/pip-audit/) | [Bandit](https://bandit.readthedocs.io/) |
+| Frontend | [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/) | `npm audit` (`npm run audit`) | — |
+
+В CI (`.github/workflows/ci.yml`) отдельные job'ы: lint, security, tests, docker-build.
 
 Отдельно по каталогам:
 
