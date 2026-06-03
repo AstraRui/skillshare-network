@@ -1,13 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import {
-  BarChart3,
-  LayoutGrid,
-  MessageSquare,
-  Shield,
-  Sparkles,
-  User,
-  Zap,
-} from 'lucide-react'
+import { BarChart3, LayoutGrid, MessageSquare, Shield, Sparkles, User, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { truncateEmail } from '../../lib/userDisplay.js'
 
@@ -35,7 +27,10 @@ function Navigation() {
   ]
 
   return (
-    <nav className="fixed left-0 right-0 top-0 z-50 px-4 py-4 md:px-6" aria-label="Главная навигация">
+    <nav
+      className="fixed left-0 right-0 top-0 z-50 px-4 py-4 md:px-6"
+      aria-label="Главная навигация"
+    >
       <div className="mx-auto flex max-w-7xl flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 shadow-2xl backdrop-blur-xl md:flex-row md:items-center md:justify-between md:gap-0 md:px-6">
         <div className="flex items-center justify-between gap-3">
           <NavLink
@@ -55,7 +50,11 @@ function Navigation() {
           </NavLink>
 
           {!isAuthenticated ? (
-            <button type="button" onClick={openAuthModal} className={`${profileButtonClass} md:hidden`}>
+            <button
+              type="button"
+              onClick={openAuthModal}
+              className={`${profileButtonClass} md:hidden`}
+            >
               <div className="flex size-7 items-center justify-center rounded-lg bg-indigo-600/80 text-indigo-200">
                 <User size={14} strokeWidth={2.5} aria-hidden />
               </div>

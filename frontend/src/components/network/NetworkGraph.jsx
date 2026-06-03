@@ -3,13 +3,7 @@ import './NetworkGraph.css'
 
 function UserGlyph({ className = '' }) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-    >
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
       <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.8" />
       <path
         d="M5.8 18c0-3.1 2.8-5 6.2-5s6.2 1.9 6.2 5"

@@ -4,8 +4,7 @@
   border-radius: var(--radius);
   border: 1px solid #1c2242;
   background:
-    radial-gradient(circle at 55% 52%, rgba(79, 70, 229, 0.22), rgba(2, 6, 23, 0) 42%),
-    #03071a;
+    radial-gradient(circle at 55% 52%, rgba(79, 70, 229, 0.22), rgba(2, 6, 23, 0) 42%), #03071a;
   overflow: hidden;
 }
 

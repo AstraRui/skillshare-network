@@ -9,8 +9,6 @@ import DealsPage from './pages/DealsPage.jsx'
 import MatchingPage from './pages/MatchingPage.jsx'
 import MessagesPage from './pages/MessagesPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
-import AdminPanelPage from './pages/AdminPanelPage.jsx'
-
 function App() {
   return (
     <Routes>

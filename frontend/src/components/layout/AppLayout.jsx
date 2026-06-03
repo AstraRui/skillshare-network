@@ -22,7 +22,6 @@ function AppLayout() {
       <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-24 md:px-6 md:pb-20 md:pt-32">
         <Outlet />
       </main>
-
     </div>
   )
 }

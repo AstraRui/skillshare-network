@@ -13,10 +13,13 @@ function OpenAuthFromLocation() {
     openAuthModal()
     const rest = { ...location.state }
     delete rest.openAuth
-    navigate({ pathname: location.pathname, search: location.search }, {
-      replace: true,
-      state: Object.keys(rest).length ? rest : null,
-    })
+    navigate(
+      { pathname: location.pathname, search: location.search },
+      {
+        replace: true,
+        state: Object.keys(rest).length ? rest : null,
+      }
+    )
   }, [location.pathname, location.search, location.state, navigate, openAuthModal])
 
   return null

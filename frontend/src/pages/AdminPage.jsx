@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, RefreshCw, Shield } from 'lucide-react'
 import { api } from '../api/client.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -47,32 +47,36 @@ function AdminPage() {
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
 
-  const load = async (currentPage = page) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const params = { limit: PAGE_SIZE, offset: currentPage * PAGE_SIZE }
-      if (filter) params.status = filter
-      const data = await api.adminExchanges(params)
-      setExchanges(data)
-      setHasMore(data.length === PAGE_SIZE)
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const load = useCallback(
+    async (currentPage) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const params = { limit: PAGE_SIZE, offset: currentPage * PAGE_SIZE }
+        if (filter) params.status = filter
+        const data = await api.adminExchanges(params)
+        setExchanges(data)
+        setHasMore(data.length === PAGE_SIZE)
+      } catch (e) {
+        setError(e.message)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [filter]
+  )
 
   useEffect(() => {
     if (!isAdmin) return
-    setPage(0)
-    void load(0)
-  }, [isAdmin, filter])
-
-  useEffect(() => {
-    if (!isAdmin) return
+    // Загрузка списка при смене страницы/фильтра — ожидаемый паттерн для админ-таблицы
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- setState внутри async load()
     void load(page)
-  }, [page])
+  }, [isAdmin, page, load])
+
+  const setFilterAndReset = (value) => {
+    setFilter(value)
+    setPage(0)
+  }
 
   if (!isAdmin) {
     return (
@@ -112,7 +116,7 @@ function AdminPage() {
           <button
             key={value}
             type="button"
-            onClick={() => setFilter(value)}
+            onClick={() => setFilterAndReset(value)}
             className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition ${
               filter === value
                 ? 'bg-indigo-600 text-white'
@@ -200,9 +204,7 @@ function AdminPage() {
             <ChevronLeft size={14} />
             Назад
           </button>
-          <span className="min-w-[2rem] text-center text-xs font-bold text-white">
-            {page + 1}
-          </span>
+          <span className="min-w-[2rem] text-center text-xs font-bold text-white">{page + 1}</span>
           <button
             type="button"
             onClick={() => setPage((p) => p + 1)}

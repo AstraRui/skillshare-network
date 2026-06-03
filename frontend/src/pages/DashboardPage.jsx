@@ -2,12 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoadingHint from '../components/ui/LoadingHint.jsx'
 import { api } from '../api/client.js'
-import {
-  buildSystemLogs,
-  matchCountLabel,
-  matchingPulseText,
-  networkEfficiencyPercent,
-} from '../lib/dashboardActivity.js'
 import { useAuth } from '../context/AuthContext.jsx'
 
 const statusProgress = {
@@ -51,8 +45,7 @@ function DashboardPage() {
   useEffect(() => {
     if (!isAuthenticated) return
     let cancelled = false
-    queueMicrotask(() => {
-      void (async () => {
+    void (async () => {
       setLoading(true)
       setLoadError(null)
       try {
@@ -67,12 +60,14 @@ function DashboardPage() {
         if (!cancelled) setLoading(false)
       }
     })()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [isAuthenticated])
 
   const activeExchanges = useMemo(
     () => allExchanges.filter((e) => e.status === 'discussion' || e.status === 'active'),
-    [allExchanges],
+    [allExchanges]
   )
 
   const swaps = useMemo(
@@ -83,13 +78,15 @@ function DashboardPage() {
         partner: statusLabel[ex.status] ?? ex.status,
         progress: statusProgress[ex.status] ?? 40,
       })),
-    [activeExchanges],
+    [activeExchanges]
   )
 
   const logs = useMemo(() => {
     if (!isAuthenticated || allExchanges.length === 0) return []
     return [...allExchanges]
-      .sort((a, b) => new Date(b.started_at ?? b.created_at) - new Date(a.started_at ?? a.created_at))
+      .sort(
+        (a, b) => new Date(b.started_at ?? b.created_at) - new Date(a.started_at ?? a.created_at)
+      )
       .slice(0, 6)
       .map((ex) => ({
         text: ex.partner_name
@@ -128,9 +125,17 @@ function DashboardPage() {
               </span>
               <h1 className="mt-4 text-4xl font-black uppercase italic leading-none tracking-tighter text-white sm:text-5xl">
                 {profile?.full_name ? (
-                  <>Привет,<br /><span className="text-indigo-400">{profile.full_name.split(' ')[0]}</span></>
+                  <>
+                    Привет,
+                    <br />
+                    <span className="text-indigo-400">{profile.full_name.split(' ')[0]}</span>
+                  </>
                 ) : (
-                  <>Skill<br /><span className="text-indigo-400">Share</span></>
+                  <>
+                    Skill
+                    <br />
+                    <span className="text-indigo-400">Share</span>
+                  </>
                 )}
               </h1>
               <p className="mt-4 max-w-sm font-medium text-slate-400">
@@ -140,9 +145,7 @@ function DashboardPage() {
               </p>
             </div>
             <div className="shrink-0 rotate-3 rounded-[32px] border border-white/10 bg-slate-800 p-8 shadow-2xl transition-transform duration-500 group-hover:rotate-0">
-              <div className="text-4xl font-black text-indigo-400">
-                {trustScore ?? '—'}
-              </div>
+              <div className="text-4xl font-black text-indigo-400">{trustScore ?? '—'}</div>
               <div className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 Trust Score
               </div>
@@ -187,7 +190,9 @@ function DashboardPage() {
           {/* Matching Pulse */}
           <div className="flex flex-col justify-between rounded-[32px] bg-gradient-to-br from-indigo-600 to-fuchsia-600 p-8 shadow-2xl shadow-indigo-500/20">
             <h3 className="text-lg font-bold uppercase italic text-white">
-              Matching<br />Pulse
+              Matching
+              <br />
+              Pulse
             </h3>
             <p className="text-sm font-medium text-white/80">
               Алгоритм матчмейкинга анализирует навыки и подбирает лучших партнёров для обмена.
@@ -219,10 +224,14 @@ function DashboardPage() {
                   key={i}
                   className="flex items-start space-x-3 border-l-2 border-transparent pl-3 transition-all hover:border-indigo-500"
                 >
-                  <div className={`mt-1.5 size-1.5 shrink-0 rounded-full ${logTypeColor[n.type] ?? 'bg-slate-500'}`} />
+                  <div
+                    className={`mt-1.5 size-1.5 shrink-0 rounded-full ${logTypeColor[n.type] ?? 'bg-slate-500'}`}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs leading-relaxed text-slate-300">{n.text}</p>
-                    <span className="mt-1 block font-mono text-[9px] uppercase text-slate-600">{n.time}</span>
+                    <span className="mt-1 block font-mono text-[9px] uppercase text-slate-600">
+                      {n.time}
+                    </span>
                   </div>
                 </div>
               ))}

@@ -33,7 +33,10 @@ function ReviewPanel({ exchangeId, userId }) {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    api.exchangeReviews(exchangeId).then(setReviews).catch(() => setReviews([]))
+    api
+      .exchangeReviews(exchangeId)
+      .then(setReviews)
+      .catch(() => setReviews([]))
   }, [exchangeId])
 
   const myReview = reviews?.find((r) => r.reviewer_id === userId)
@@ -62,8 +65,13 @@ function ReviewPanel({ exchangeId, userId }) {
       {myReview ? (
         <div className="flex items-center gap-3">
           <span className="text-xs text-slate-500">Ваш отзыв:</span>
-          <span className="text-amber-400">{'★'.repeat(myReview.rating)}{'☆'.repeat(5 - myReview.rating)}</span>
-          {myReview.comment ? <span className="text-xs text-slate-400 truncate">{myReview.comment}</span> : null}
+          <span className="text-amber-400">
+            {'★'.repeat(myReview.rating)}
+            {'☆'.repeat(5 - myReview.rating)}
+          </span>
+          {myReview.comment ? (
+            <span className="text-xs text-slate-400 truncate">{myReview.comment}</span>
+          ) : null}
         </div>
       ) : canReview ? (
         <form onSubmit={handleSubmit}>
@@ -123,6 +131,7 @@ function MessagesPage() {
   const [error, setError] = useState(null)
   const [loadingList, setLoadingList] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState(false)
+  const [actionBusy, setActionBusy] = useState(false)
   const wsRef = useRef(null)
   const bottomRef = useRef(null)
   // Кэш exchange_id → chat_id, не вызывает ре-рендер
@@ -140,7 +149,7 @@ function MessagesPage() {
         // При переходе с матчейкинга всегда выбираем обмен с нужным пользователем
         if (targetUserId != null) {
           const target = ex.find(
-            (e) => e.initiator_id === targetUserId || e.partner_id === targetUserId,
+            (e) => e.initiator_id === targetUserId || e.partner_id === targetUserId
           )
           // Нашли обмен — открываем его; не нашли — null (покажем подсказку)
           return target ? target.id : null
@@ -153,7 +162,7 @@ function MessagesPage() {
     } finally {
       setLoadingList(false)
     }
-  }, [isAuthenticated, targetUserId])
+  }, [targetUserId])
 
   useEffect(() => {
     ;(async () => {
@@ -177,12 +186,11 @@ function MessagesPage() {
         setLoadingMsg(false)
       }
     },
-    [isAuthenticated],
+    [isAuthenticated]
   )
 
   useEffect(() => {
     if (selectedId == null) return
-
     ;(async () => {
       await loadMessages(selectedId)
     })()
@@ -229,7 +237,7 @@ function MessagesPage() {
               // eslint-disable-next-line no-unused-vars
               const { partner_id, partner_name, ...statusFields } = data.exchange
               return { ...ex, ...statusFields }
-            }),
+            })
           )
         } else {
           setMessages((prev) => [...prev, data])
@@ -355,6 +363,25 @@ function MessagesPage() {
         </div>
 
         <div className="custom-scrollbar flex-1 overflow-y-auto px-3 pb-4">
+          {incomingInterests.length > 0 ? (
+            <div className="mb-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                Новые отклики ({incomingInterests.length})
+              </p>
+              <ul className="mt-2 space-y-2">
+                {incomingInterests.slice(0, 3).map((item) => (
+                  <li key={item.id} className="text-xs text-slate-300">
+                    <span className="font-bold text-white">{item.responder_full_name}</span>
+                    {' → '}
+                    {item.listing_title}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[10px] text-slate-500">
+                Примите отклик в профиле, чтобы открыть сделку.
+              </p>
+            </div>
+          ) : null}
           {loadingList ? (
             <div className="px-2">
               <LoadingHint label="Загрузка…" />
@@ -371,9 +398,7 @@ function MessagesPage() {
           ) : (
             <div className="space-y-1">
               {exchanges.map((ex) => {
-                const name = ex.partner_name
-                  ? `${ex.partner_name} (#${ex.id})`
-                  : `Обмен #${ex.id}`
+                const name = ex.partner_name ? `${ex.partner_name} (#${ex.id})` : `Обмен #${ex.id}`
                 return (
                   <button
                     key={ex.id}
@@ -423,8 +448,8 @@ function MessagesPage() {
                 <MessageSquare className="mx-auto mb-3 text-slate-600" size={32} />
                 <p className="text-sm font-bold text-slate-400">Нет общей сделки</p>
                 <p className="mt-2 text-xs text-slate-500">
-                  Чтобы написать этому пользователю, сначала откликнитесь на его объявление
-                  на странице Сделки.
+                  Чтобы написать этому пользователю, сначала откликнитесь на его объявление на
+                  странице Сделки.
                 </p>
               </div>
             ) : (
@@ -450,42 +475,45 @@ function MessagesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {selected?.status === 'discussion' ? (() => {
-                  const startStatus = getStartStatus()
-                  if (startStatus === 'waiting_partner') {
-                    return (
-                      <span className="rounded-xl bg-slate-700 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        Ожидаем подтверждения
-                      </span>
-                    )
-                  }
-                  if (startStatus === 'partner_waiting_you') {
+                {selected?.status === 'discussion' ? (
+                  (() => {
+                    const startStatus = getStartStatus()
+                    if (startStatus === 'waiting_partner') {
+                      return (
+                        <span className="rounded-xl bg-slate-700 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Ожидаем подтверждения
+                        </span>
+                      )
+                    }
+                    if (startStatus === 'partner_waiting_you') {
+                      return (
+                        <button
+                          type="button"
+                          onClick={startExchange}
+                          className="rounded-xl bg-amber-500 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 animate-pulse"
+                        >
+                          Подтвердить начало
+                        </button>
+                      )
+                    }
                     return (
                       <button
                         type="button"
                         onClick={startExchange}
-                        className="rounded-xl bg-amber-500 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 animate-pulse"
+                        className="rounded-xl bg-amber-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition hover:bg-amber-500"
                       >
-                        Подтвердить начало
+                        Начать обмен
                       </button>
                     )
-                  }
-                  return (
-                    <button
-                      type="button"
-                      onClick={startExchange}
-                      className="rounded-xl bg-amber-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition hover:bg-amber-500"
-                    >
-                      Начать обмен
-                    </button>
-                  )
-                })() : selected?.status === 'active' ? (
+                  })()
+                ) : selected?.status === 'active' ? (
                   <button
                     type="button"
                     onClick={confirmDone}
-                    className="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500"
+                    disabled={actionBusy}
+                    className="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 disabled:opacity-50"
                   >
-                    Подтвердить выполнение
+                    {actionBusy ? '…' : 'Подтвердить выполнение'}
                   </button>
                 ) : null}
               </div>
@@ -528,6 +556,10 @@ function MessagesPage() {
               )}
               <div ref={bottomRef} />
             </div>
+
+            {selected?.status === 'completed' && userId ? (
+              <ReviewPanel exchangeId={selected.id} userId={userId} />
+            ) : null}
 
             {/* Ввод */}
             <div className="border-t border-white/5 bg-slate-900/50 p-4 sm:p-6">

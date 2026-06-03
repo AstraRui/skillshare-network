@@ -90,9 +90,7 @@ function LandingPage() {
 
       {/* CTA */}
       <section className="rounded-[32px] border border-white/5 bg-gradient-to-br from-indigo-600/10 to-fuchsia-600/10 p-10 text-center">
-        <h2 className="mb-3 text-2xl font-black italic text-white">
-          Готов обменяться навыками?
-        </h2>
+        <h2 className="mb-3 text-2xl font-black italic text-white">Готов обменяться навыками?</h2>
         <p className="mb-8 text-sm text-slate-400">
           Зарегистрируйся за 30 секунд и создай первое объявление.
         </p>

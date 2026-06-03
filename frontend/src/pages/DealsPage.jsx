@@ -122,9 +122,7 @@ function CreateListingModal({ onClose, onCreated }) {
             />
           </div>
 
-          {error ? (
-            <p className="text-xs text-red-400">{error}</p>
-          ) : null}
+          {error ? <p className="text-xs text-red-400">{error}</p> : null}
 
           <div className="flex gap-3 pt-2">
             <button
@@ -212,48 +210,6 @@ function DealsPage() {
   const handleCreated = async () => {
     setCreateOpen(false)
     await loadListings()
-  }
-
-  const isOwnListing =
-    selected != null && userId != null && Number(selected.authorId) === Number(userId)
-
-  const closeModal = useCallback(() => {
-    setSelected(null)
-    setInterestMessage('')
-    setInterestFeedback(null)
-  }, [])
-
-  useEffect(() => {
-    if (!selected) return undefined
-    const onKey = (e) => {
-      if (e.key === 'Escape') closeModal()
-    }
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = ''
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [selected, closeModal])
-
-  const submitInterest = async () => {
-    if (!selected || isOwnListing) return
-    setInterestBusy(true)
-    setInterestFeedback(null)
-    try {
-      await api.createListingInterest(selected.id, {
-        message: interestMessage.trim() || undefined,
-      })
-      setInterestFeedback({
-        type: 'ok',
-        text: 'Отклик отправлен. Автор объявления увидит его и сможет принять — тогда сделка появится в «Сообщениях».',
-      })
-      setInterestMessage('')
-    } catch (e) {
-      setInterestFeedback({ type: 'err', text: e.message })
-    } finally {
-      setInterestBusy(false)
-    }
   }
 
   return (
@@ -394,9 +350,7 @@ function DealsPage() {
               <X size={20} />
             </button>
 
-            <h3 className="mb-2 text-xl font-black italic text-white">
-              {selectedListing.title}
-            </h3>
+            <h3 className="mb-2 text-xl font-black italic text-white">{selectedListing.title}</h3>
             <p className="mb-6 text-xs text-slate-400">
               Отправьте сообщение автору объявления. После принятия откроется чат.
             </p>

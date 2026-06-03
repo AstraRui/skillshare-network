@@ -1,9 +1,7 @@
 function AdminUsersTable({ users = [], onLoad }) {
   return (
     <div>
-      <button onClick={onLoad}>
-        Load users
-      </button>
+      <button onClick={onLoad}>Load users</button>
 
       <table>
         <tbody>

@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from 'react'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { api } from '../api/client.js'
 import { jwtUserId, jwtUserRole } from '../lib/jwt.js'
 import { initialsFromEmail } from '../lib/userDisplay.js'
@@ -41,12 +35,15 @@ export function AuthProvider({ children }) {
     setEmail(loginEmail)
   }, [])
 
-  const register = useCallback(async ({ email: regEmail, password, full_name }) => {
-    await api.register({ email: regEmail, password, full_name: full_name || null })
-    // Сразу логиним — не гоняем пользователя на форму входа
-    await login(regEmail, password)
-    setJustRegistered(true)
-  }, [login])
+  const register = useCallback(
+    async ({ email: regEmail, password, full_name }) => {
+      await api.register({ email: regEmail, password, full_name: full_name || null })
+      // Сразу логиним — не гоняем пользователя на форму входа
+      await login(regEmail, password)
+      setJustRegistered(true)
+    },
+    [login]
+  )
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
@@ -87,7 +84,7 @@ export function AuthProvider({ children }) {
       authModalOpen,
       openAuthModal,
       closeAuthModal,
-    ],
+    ]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

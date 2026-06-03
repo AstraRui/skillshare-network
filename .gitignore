@@ -85,4 +85,5 @@ node_modules/
 dist/
 build/
 .eslintcache
+.prettiercache
 frontend/node_modules/

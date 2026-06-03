@@ -1,89 +1,145 @@
 <!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <title>SkillShare Admin Panel</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background: #f7f7f7; color: #222; }
-    section { background: white; padding: 16px; border-radius: 10px; margin-bottom: 16px; }
-    input, button, select { padding: 8px; margin: 4px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th, td { border: 1px solid #ddd; padding: 8px; font-size: 14px; }
-    th { background: #eee; text-align: left; }
-    .danger { background: #e53935; color: white; border: 0; }
-    .ok { background: #43a047; color: white; border: 0; }
-  </style>
-</head>
-<body>
-  <h1>SkillShare Admin Panel</h1>
+  <head>
+    <meta charset="utf-8" />
+    <title>SkillShare Admin Panel</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+        background: #f7f7f7;
+        color: #222;
+      }
+      section {
+        background: white;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+      }
+      input,
+      button,
+      select {
+        padding: 8px;
+        margin: 4px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        font-size: 14px;
+      }
+      th {
+        background: #eee;
+        text-align: left;
+      }
+      .danger {
+        background: #e53935;
+        color: white;
+        border: 0;
+      }
+      .ok {
+        background: #43a047;
+        color: white;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SkillShare Admin Panel</h1>
 
-  <section>
-    <h2>JWT token</h2>
-    <input id="token" type="text" placeholder="Bearer token" style="width: 80%;" />
-  </section>
+    <section>
+      <h2>JWT token</h2>
+      <input id="token" type="text" placeholder="Bearer token" style="width: 80%" />
+    </section>
 
-  <section>
-    <h2>Пользователи</h2>
-    <button onclick="loadUsers()">Загрузить пользователей</button>
-    <table>
-      <thead>
-        <tr><th>ID</th><th>Email</th><th>Имя</th><th>Роль</th><th>Заблокирован</th><th>Действия</th></tr>
-      </thead>
-      <tbody id="users"></tbody>
-    </table>
-  </section>
+    <section>
+      <h2>Пользователи</h2>
+      <button onclick="loadUsers()">Загрузить пользователей</button>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Имя</th>
+            <th>Роль</th>
+            <th>Заблокирован</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="users"></tbody>
+      </table>
+    </section>
 
-  <section>
-    <h2>Сделки</h2>
-    <button onclick="loadExchanges()">Загрузить сделки</button>
-    <table>
-      <thead>
-        <tr><th>ID</th><th>Initiator</th><th>Listing</th><th>Status</th><th>Deleted</th><th>Действия</th></tr>
-      </thead>
-      <tbody id="exchanges"></tbody>
-    </table>
-  </section>
+    <section>
+      <h2>Сделки</h2>
+      <button onclick="loadExchanges()">Загрузить сделки</button>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Initiator</th>
+            <th>Listing</th>
+            <th>Status</th>
+            <th>Deleted</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="exchanges"></tbody>
+      </table>
+    </section>
 
-  <section>
-    <h2>Чаты</h2>
-    <button onclick="loadChats()">Загрузить чаты</button>
-    <table>
-      <thead>
-        <tr><th>ID</th><th>Exchange</th><th>Status</th><th>Действия</th></tr>
-      </thead>
-      <tbody id="chats"></tbody>
-    </table>
-  </section>
+    <section>
+      <h2>Чаты</h2>
+      <button onclick="loadChats()">Загрузить чаты</button>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Exchange</th>
+            <th>Status</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="chats"></tbody>
+      </table>
+    </section>
 
-<script>
-const API = "/api/v1/admin";
+    <script>
+      const API = '/api/v1/admin'
 
-function headers() {
-  return {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${document.getElementById("token").value}`
-  };
-}
+      function headers() {
+        return {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${document.getElementById('token').value}`,
+        }
+      }
 
-async function api(path, options = {}) {
-  const res = await fetch(`${API}${path}`, { ...options, headers: headers() });
-  if (!res.ok && res.status !== 204) {
-    alert(`Ошибка ${res.status}: ${await res.text()}`);
-    return null;
-  }
-  if (res.status === 204) return null;
-  return await res.json();
-}
+      async function api(path, options = {}) {
+        const res = await fetch(`${API}${path}`, { ...options, headers: headers() })
+        if (!res.ok && res.status !== 204) {
+          alert(`Ошибка ${res.status}: ${await res.text()}`)
+          return null
+        }
+        if (res.status === 204) return null
+        return await res.json()
+      }
 
-async function loadUsers() {
-  const data = await api("/users");
-  if (!data) return;
+      async function loadUsers() {
+        const data = await api('/users')
+        if (!data) return
 
-  document.getElementById("users").innerHTML = data.map(user => `
+        document.getElementById('users').innerHTML = data
+          .map(
+            (user) => `
     <tr>
       <td>${user.id}</td>
       <td>${user.email}</td>
-      <td>${user.full_name ?? ""}</td>
+      <td>${user.full_name ?? ''}</td>
       <td>${user.role}</td>
       <td>${user.is_deleted}</td>
       <td>
@@ -91,45 +147,53 @@ async function loadUsers() {
         <button class="ok" onclick="setUserBlocked(${user.id}, false)">Разбан</button>
       </td>
     </tr>
-  `).join("");
-}
+  `
+          )
+          .join('')
+      }
 
-async function setUserBlocked(userId, blocked) {
-  await api(`/users/${userId}/status`, {
-    method: "PATCH",
-    body: JSON.stringify({ is_deleted: blocked })
-  });
-  await loadUsers();
-}
+      async function setUserBlocked(userId, blocked) {
+        await api(`/users/${userId}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ is_deleted: blocked }),
+        })
+        await loadUsers()
+      }
 
-async function loadExchanges() {
-  const data = await api("/exchanges");
-  if (!data) return;
+      async function loadExchanges() {
+        const data = await api('/exchanges')
+        if (!data) return
 
-  document.getElementById("exchanges").innerHTML = data.map(exchange => `
+        document.getElementById('exchanges').innerHTML = data
+          .map(
+            (exchange) => `
     <tr>
       <td>${exchange.id}</td>
       <td>${exchange.initiator_id}</td>
-      <td>${exchange.listing_id ?? ""}</td>
+      <td>${exchange.listing_id ?? ''}</td>
       <td>${exchange.status}</td>
       <td>${exchange.is_deleted}</td>
       <td>
         <button class="danger" onclick="cancelExchange(${exchange.id})">Отменить</button>
       </td>
     </tr>
-  `).join("");
-}
+  `
+          )
+          .join('')
+      }
 
-async function cancelExchange(exchangeId) {
-  await api(`/exchanges/${exchangeId}`, { method: "DELETE" });
-  await loadExchanges();
-}
+      async function cancelExchange(exchangeId) {
+        await api(`/exchanges/${exchangeId}`, { method: 'DELETE' })
+        await loadExchanges()
+      }
 
-async function loadChats() {
-  const data = await api("/chats");
-  if (!data) return;
+      async function loadChats() {
+        const data = await api('/chats')
+        if (!data) return
 
-  document.getElementById("chats").innerHTML = data.map(chat => `
+        document.getElementById('chats').innerHTML = data
+          .map(
+            (chat) => `
     <tr>
       <td>${chat.id}</td>
       <td>${chat.exchange_id}</td>
@@ -139,20 +203,22 @@ async function loadChats() {
         <button class="danger" onclick="closeChat(${chat.id})">Закрыть</button>
       </td>
     </tr>
-  `).join("");
-}
+  `
+          )
+          .join('')
+      }
 
-async function closeChat(chatId) {
-  await api(`/chats/${chatId}`, { method: "DELETE" });
-  await loadChats();
-}
+      async function closeChat(chatId) {
+        await api(`/chats/${chatId}`, { method: 'DELETE' })
+        await loadChats()
+      }
 
-async function loadMessages(chatId) {
-  const data = await api(`/chats/${chatId}/messages`);
-  if (!data) return;
+      async function loadMessages(chatId) {
+        const data = await api(`/chats/${chatId}/messages`)
+        if (!data) return
 
-  alert(data.map(m => `#${m.id} user=${m.sender_id}: ${m.content ?? ""}`).join("\\n"));
-}
-</script>
-</body>
+        alert(data.map((m) => `#${m.id} user=${m.sender_id}: ${m.content ?? ''}`).join('\\n'))
+      }
+    </script>
+  </body>
 </html>

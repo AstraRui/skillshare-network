@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import Select, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,8 +14,11 @@ from app.models.user import User
 from app.schemas.listing import (
     ListingCreate,
     ListingInterestCreate,
+    ListingInterestDetailOut,
     ListingInterestOut,
     ListingOut,
+    ListingUpdate,
+    listing_to_out,
 )
 
 router = APIRouter(prefix="/listings", tags=["listings"])
@@ -168,28 +171,6 @@ async def get_listings(
     return [listing_to_out(listing, full_name) for listing, full_name in rows.all()]
 
 
-@router.get(
-    "/{listing_id}/interests",
-    response_model=list[ListingInterestOut],
-)
-async def get_listing_interests(
-    listing_id: int,
-    db: DbSession,
-    current_user: CurrentUser,
-) -> list[ListingInterest]:
-    listing = await db.get(Listing, listing_id)
-    if listing is None:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    if listing.author_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Only listing author can view interests")
-    result = await db.scalars(
-        select(ListingInterest)
-        .where(ListingInterest.listing_id == listing_id)
-        .order_by(ListingInterest.created_at.desc())
-    )
-    return list(result)
-
-
 @router.post(
     "/{listing_id}/interests",
     response_model=ListingInterestOut,
@@ -200,7 +181,7 @@ async def create_listing_interest(
     payload: ListingInterestCreate,
     db: DbSession,
     current_user: CurrentUser,
-) -> ListingInterest:
+) -> ListingInterestOut:
     listing = await db.get(Listing, listing_id)
     if listing is None or listing.status != ListingStatus.published:
         raise HTTPException(status_code=404, detail="Listing not found")
@@ -221,4 +202,4 @@ async def create_listing_interest(
         raise HTTPException(status_code=409, detail="Interest already exists") from exc
 
     await db.refresh(interest)
-    return interest
+    return ListingInterestOut.model_validate(interest)

@@ -193,8 +193,8 @@ export default function DealListingModal({
             {isOwnListing ? (
               <section className="space-y-3 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4">
                 <p className="text-sm leading-relaxed text-slate-300">
-                  Отклик не открывает чат сразу. Примите отклик — тогда появится сделка и переписка в
-                  «Сообщениях».
+                  Отклик не открывает чат сразу. Примите отклик — тогда появится сделка и переписка
+                  в «Сообщениях».
                 </p>
                 {loadingInterests ? <LoadingHint label="Загрузка откликов…" /> : null}
                 {!loadingInterests && pendingInterests.length === 0 ? (
@@ -273,6 +273,6 @@ export default function DealListingModal({
         </div>
       </div>
     </div>,
-    document.body,
+    document.body
   )
 }

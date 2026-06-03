@@ -1,25 +1,30 @@
 repos:
   # ── Python: ruff lint + format ───────────────────────────────────────────────
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.11
+    rev: v0.15.12
     hooks:
       - id: ruff
         args: [--fix]
         files: ^backend/
-        stages: [manual]
 
       - id: ruff-format
         files: ^backend/
-        stages: [manual]
 
-  # ── JS/JSX: eslint ───────────────────────────────────────────────────────────
+  # ── JS/JSX: eslint + prettier ────────────────────────────────────────────────
   - repo: local
     hooks:
       - id: eslint
         name: eslint
         language: node
-        entry: bash -c 'cd frontend && npx eslint --max-warnings=0 .'
+        entry: bash -c 'cd frontend && npm run lint'
         files: ^frontend/.*\.[jt]sx?$
+        pass_filenames: false
+
+      - id: prettier
+        name: prettier
+        language: node
+        entry: bash -c 'cd frontend && npm run format:check'
+        files: ^frontend/
         pass_filenames: false
 
   # ── General ──────────────────────────────────────────────────────────────────

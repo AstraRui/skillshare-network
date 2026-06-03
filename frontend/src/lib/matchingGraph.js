@@ -1,11 +1,7 @@
 /** Преобразует результат API matching в узел графа для MatchingPage. */
 export function matchToGraphNode(match) {
-  const getNames = (match.skills_i_get ?? [])
-    .map((s) => s.skill_name)
-    .filter(Boolean)
-  const giveNames = (match.skills_i_give ?? [])
-    .map((s) => s.skill_name)
-    .filter(Boolean)
+  const getNames = (match.skills_i_get ?? []).map((s) => s.skill_name).filter(Boolean)
+  const giveNames = (match.skills_i_give ?? []).map((s) => s.skill_name).filter(Boolean)
 
   const score = match.score?.final_score ?? 0
   const primarySkill = getNames[0] ?? giveNames[0] ?? 'Обмен'

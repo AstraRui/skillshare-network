@@ -1,5 +1,3 @@
-import { jwtUserId } from '../lib/jwt.js'
-
 const API_PREFIX = '/api/v1'
 
 async function parseBody(res) {
@@ -82,6 +80,7 @@ export const api = {
   // ── Users ─────────────────────────────────────────────────────────────────
   getMe: () => request('/users/me'),
   updateMe: (payload) => request('/users/me', { method: 'PATCH', body: payload }),
+  updateMyProfile: (payload) => request('/users/me', { method: 'PATCH', body: payload }),
   changePassword: (current_password, new_password) =>
     request('/users/me/password', { method: 'PATCH', body: { current_password, new_password } }),
   getMySkills: () => request('/users/me/skills'),
@@ -105,6 +104,16 @@ export const api = {
   respondToListing: (listingId, message = null) =>
     request(`/listings/${listingId}/interests`, { method: 'POST', body: { message } }),
   listingInterests: (listingId) => request(`/listings/${listingId}/interests`),
+  incomingInterests: () => request('/listings/me/incoming-interests'),
+  updateListing: (listingId, payload) =>
+    request(`/listings/${listingId}`, { method: 'PATCH', body: payload }),
+  createListingInterest: (listingId, payload = {}) =>
+    request(`/listings/${listingId}/interests`, { method: 'POST', body: payload }),
+  acceptListingInterest: (listingId, responderId) =>
+    request(`/exchanges/listing/${listingId}/accept-interest`, {
+      method: 'POST',
+      body: { responder_id: responderId },
+    }),
 
   // ── Exchanges ─────────────────────────────────────────────────────────────
   myExchanges: () => request('/exchanges'),
@@ -124,7 +133,10 @@ export const api = {
 
   exchangeReviews: (exchangeId) => request(`/exchanges/${exchangeId}/reviews`),
   submitReview: (exchangeId, rating, comment) =>
-    request(`/exchanges/${exchangeId}/reviews`, { method: 'POST', body: { rating, comment: comment || null } }),
+    request(`/exchanges/${exchangeId}/reviews`, {
+      method: 'POST',
+      body: { rating, comment: comment || null },
+    }),
   myReceivedReviews: () => request('/users/me/reviews'),
 
   // ── Chat ──────────────────────────────────────────────────────────────────
@@ -147,17 +159,4 @@ export const api = {
     const s = q.toString()
     return request(s ? `/admin/exchanges?${s}` : '/admin/exchanges')
   },
-  createListing: (payload) => request('/listings', { method: 'POST', body: payload }),
-  updateListing: (listingId, payload) =>
-    request(`/listings/${listingId}`, { method: 'PATCH', body: payload }),
-  createListingInterest: (listingId, payload = {}) =>
-    request(`/listings/${listingId}/interests`, { method: 'POST', body: payload }),
-  incomingInterests: () => request('/listings/me/incoming-interests'),
-  listingInterests: (listingId) => request(`/listings/${listingId}/interests`),
-  acceptListingInterest: (listingId, responderId) =>
-    request(`/exchanges/listing/${listingId}/accept-interest`, {
-      method: 'POST',
-      body: { responder_id: responderId },
-    }),
-  matches: () => request('/matches'),
 }

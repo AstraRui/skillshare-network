@@ -22,7 +22,8 @@ class ExchangeOut(BaseModel):
     initiator_id: int
     partner_id: int | None = None
     partner_name: str | None = None
-    listing_id: int | None
+    listing_id: int | None = None
+    listing_title: str | None = None
     status: ExchangeStatus
     is_chain: bool
     created_at: datetime

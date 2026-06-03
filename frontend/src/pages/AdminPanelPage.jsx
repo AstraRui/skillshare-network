@@ -10,14 +10,14 @@ import {
   getAdminListings,
   getAdminUsers,
   updateAdminUserStatus,
-} from '../../admin/adminApi.js'
+} from '../admin/adminApi.js'
 
-import AdminUsersTable from '../../admin/AdminUsersTable.jsx'
-import AdminListingsTable from '../../admin/AdminListingsTable.jsx'
-import AdminExchangesTable from '../../admin/AdminExchangesTable.jsx'
-import AdminChatsTable from '../../admin/AdminChatsTable.jsx'
-import AdminMessagesList from '../../admin/AdminMessagesList.jsx'
-import AdminTokenCard from '../../admin/AdminTokenCard.jsx'
+import AdminUsersTable from '../admin/AdminUsersTable.jsx'
+import AdminListingsTable from '../admin/AdminListingsTable.jsx'
+import AdminExchangesTable from '../admin/AdminExchangesTable.jsx'
+import AdminChatsTable from '../admin/AdminChatsTable.jsx'
+import AdminMessagesList from '../admin/AdminMessagesList.jsx'
+import AdminTokenCard from '../admin/AdminTokenCard.jsx'
 function AdminPanelPage() {
   const [token, setToken] = useState('')
   const [users, setUsers] = useState([])
@@ -108,11 +108,7 @@ function AdminPanelPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <AdminTokenCard
-        token={token}
-        onTokenChange={setToken}
-        error={error}
-      />
+      <AdminTokenCard token={token} onTokenChange={setToken} error={error} />
 
       <AdminUsersTable
         users={users}
@@ -147,10 +143,7 @@ function AdminPanelPage() {
         onLoadMessages={loadMessages}
       />
 
-      <AdminMessagesList
-        selectedChatId={selectedChatId}
-        messages={messages}
-      />
+      <AdminMessagesList selectedChatId={selectedChatId} messages={messages} />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Award,
+  Bell,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -15,8 +16,8 @@ import {
   Zap,
 } from 'lucide-react'
 import { api } from '../api/client.js'
-import ListingEditForm from '../components/listings/ListingEditForm.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { initialsFromName } from '../lib/userDisplay.js'
 import LoadingHint from '../components/ui/LoadingHint.jsx'
 
 // Профиль считается заполненным если есть имя
@@ -61,7 +62,7 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
     setError(null)
     try {
       const skill = await api.createSkill(skillName)
-      setOffered(prev => [...prev, { skill_id: skill.id, skill_name: skill.name, level: 2 }])
+      setOffered((prev) => [...prev, { skill_id: skill.id, skill_name: skill.name, level: 2 }])
       setOfferedInput('')
     } catch (err) {
       setError(err.message)
@@ -78,7 +79,10 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
     setError(null)
     try {
       const skill = await api.createSkill(skillName)
-      setWanted(prev => [...prev, { skill_id: skill.id, skill_name: skill.name, desired_level: 2 }])
+      setWanted((prev) => [
+        ...prev,
+        { skill_id: skill.id, skill_name: skill.name, desired_level: 2 },
+      ])
       setWantedInput('')
     } catch (err) {
       setError(err.message)
@@ -88,19 +92,21 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
   }
 
   const removeOffered = (skillId) => {
-    setOffered(prev => prev.filter(s => s.skill_id !== skillId))
+    setOffered((prev) => prev.filter((s) => s.skill_id !== skillId))
   }
 
   const removeWanted = (skillId) => {
-    setWanted(prev => prev.filter(s => s.skill_id !== skillId))
+    setWanted((prev) => prev.filter((s) => s.skill_id !== skillId))
   }
 
   const updateOfferedLevel = (skillId, level) => {
-    setOffered(prev => prev.map(s => s.skill_id === skillId ? { ...s, level } : s))
+    setOffered((prev) => prev.map((s) => (s.skill_id === skillId ? { ...s, level } : s)))
   }
 
   const updateWantedLevel = (skillId, level) => {
-    setWanted(prev => prev.map(s => s.skill_id === skillId ? { ...s, desired_level: level } : s))
+    setWanted((prev) =>
+      prev.map((s) => (s.skill_id === skillId ? { ...s, desired_level: level } : s))
+    )
   }
 
   const handleSaveSkills = async (e) => {
@@ -109,8 +115,8 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
     setError(null)
     try {
       await onSkillsSave({
-        offered: offered.map(s => ({ skill_id: s.skill_id, level: s.level })),
-        wanted: wanted.map(s => ({ skill_id: s.skill_id, desired_level: s.desired_level })),
+        offered: offered.map((s) => ({ skill_id: s.skill_id, level: s.level })),
+        wanted: wanted.map((s) => ({ skill_id: s.skill_id, desired_level: s.desired_level })),
       })
     } catch (err) {
       setError(err.message)
@@ -191,8 +197,11 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
           </form>
           {offered.length > 0 ? (
             <ul className="space-y-2">
-              {offered.map(s => (
-                <li key={s.skill_id} className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 p-3">
+              {offered.map((s) => (
+                <li
+                  key={s.skill_id}
+                  className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 p-3"
+                >
                   <span className="flex-1 text-sm font-bold text-white">{s.skill_name}</span>
                   <select
                     value={s.level}
@@ -241,8 +250,11 @@ function OnboardingBanner({ profile, onSave, mySkills, onSkillsSave }) {
           </form>
           {wanted.length > 0 ? (
             <ul className="space-y-2">
-              {wanted.map(s => (
-                <li key={s.skill_id} className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 p-3">
+              {wanted.map((s) => (
+                <li
+                  key={s.skill_id}
+                  className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 p-3"
+                >
                   <span className="flex-1 text-sm font-bold text-white">{s.skill_name}</span>
                   <select
                     value={s.desired_level}
@@ -295,11 +307,19 @@ function SecuritySection() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (next !== confirm) { setError('Пароли не совпадают'); return }
-    setSaving(true); setError(null); setSuccess(false)
+    if (next !== confirm) {
+      setError('Пароли не совпадают')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    setSuccess(false)
     try {
       await api.changePassword(cur, next)
-      setSuccess(true); setCur(''); setNext(''); setConfirm('')
+      setSuccess(true)
+      setCur('')
+      setNext('')
+      setConfirm('')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -312,22 +332,46 @@ function SecuritySection() {
       <h3 className="mb-6 text-2xl font-black uppercase italic text-white">Безопасность</h3>
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         {[
-          { label: 'Текущий пароль', val: cur, set: setCur, show: showCur, toggle: () => setShowCur(v => !v) },
-          { label: 'Новый пароль', val: next, set: setNext, show: showNext, toggle: () => setShowNext(v => !v) },
-          { label: 'Повторите новый пароль', val: confirm, set: setConfirm, show: showNext, toggle: null },
+          {
+            label: 'Текущий пароль',
+            val: cur,
+            set: setCur,
+            show: showCur,
+            toggle: () => setShowCur((v) => !v),
+          },
+          {
+            label: 'Новый пароль',
+            val: next,
+            set: setNext,
+            show: showNext,
+            toggle: () => setShowNext((v) => !v),
+          },
+          {
+            label: 'Повторите новый пароль',
+            val: confirm,
+            set: setConfirm,
+            show: showNext,
+            toggle: null,
+          },
         ].map(({ label, val, set, show, toggle }) => (
           <div key={label}>
-            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</label>
+            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-slate-400">
+              {label}
+            </label>
             <div className="relative">
               <input
                 type={show ? 'text' : 'password'}
                 value={val}
-                onChange={e => set(e.target.value)}
+                onChange={(e) => set(e.target.value)}
                 required
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none ring-indigo-500 focus:ring-1 pr-10"
               />
               {toggle ? (
-                <button type="button" onClick={toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                <button
+                  type="button"
+                  onClick={toggle}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                >
                   {show ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               ) : null}
@@ -376,11 +420,15 @@ function NotificationsSection() {
     new_message: false,
     reviews: false,
   })
-  const toggle = (key) => setSettings(prev => ({ ...prev, [key]: !prev[key] }))
+  const toggle = (key) => setSettings((prev) => ({ ...prev, [key]: !prev[key] }))
 
   const items = [
     { key: 'new_match', label: 'Новые матчи', desc: 'Когда алгоритм находит подходящего партнёра' },
-    { key: 'exchange_update', label: 'Обновления сделок', desc: 'Подтверждения начала и завершения обменов' },
+    {
+      key: 'exchange_update',
+      label: 'Обновления сделок',
+      desc: 'Подтверждения начала и завершения обменов',
+    },
     { key: 'new_message', label: 'Новые сообщения', desc: 'Входящие сообщения в чатах сделок' },
     { key: 'reviews', label: 'Отзывы', desc: 'Когда партнёр оставляет отзыв о сделке' },
   ]
@@ -396,7 +444,10 @@ function NotificationsSection() {
       <p className="mb-6 text-xs text-slate-500">Управление уведомлениями в приложении</p>
       <div className="max-w-md space-y-3">
         {items.map(({ key, label, desc }) => (
-          <div key={key} className="flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+          <div
+            key={key}
+            className="flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 p-4"
+          >
             <div className="min-w-0">
               <p className="text-sm font-bold text-white">{label}</p>
               <p className="text-xs text-slate-500">{desc}</p>
@@ -454,125 +505,20 @@ function ProfilePage() {
     return () => {
       cancelled = true
     }
-  }, [userId, reload])
+  }, [userId])
 
-  const displayName = profile?.full_name?.trim() || email?.split('@')[0] || 'Пользователь'
   const initials = initialsFromName(profile?.full_name, email)
 
-  const handleSaveName = async (e) => {
-    e.preventDefault()
-    setActionError(null)
-    try {
-      const updated = await api.updateMyProfile({ full_name: editName.trim() || null })
-      setProfile(updated)
-      setEditOpen(false)
-    } catch (err) {
-      setActionError(err.message || 'Не удалось сохранить')
-    }
-  }
-
-  const handleAddSkill = async (e) => {
-    e.preventDefault()
-    const name = newSkillName.trim()
-    if (!name) return
-    setActionError(null)
-    try {
-      if (addSkillOpen === 'offered') {
-        await api.addOfferedSkill({ name })
-      } else {
-        await api.addWantedSkill({ name })
-      }
-      setNewSkillName('')
-      setAddSkillOpen(null)
-      const sk = await api.mySkills()
-      setSkills(sk)
-    } catch (err) {
-      setActionError(err.message || 'Не удалось добавить навык')
-    }
-  }
-
-  const handleRemoveSkill = async (kind, skillId) => {
-    setActionError(null)
-    try {
-      if (kind === 'offered') await api.removeOfferedSkill(skillId)
-      else await api.removeWantedSkill(skillId)
-      const sk = await api.mySkills()
-      setSkills(sk)
-    } catch (err) {
-      setActionError(err.message || 'Не удалось удалить навык')
-    }
-  }
-
-  const handleUpdateListing = async (listingId, form) => {
-    setActionError(null)
-    setListingSaveBusy(true)
-    try {
-      await api.updateListing(listingId, {
-        title: form.title.trim(),
-        offering_summary: form.offering_summary.trim(),
-        seeking_summary: form.seeking_summary.trim(),
-        description: form.description.trim() || null,
-      })
-      setEditingListingId(null)
-      const [prof, list] = await Promise.all([api.myProfile(), api.listings({ author_id: userId })])
-      setProfile(prof)
-      setMyListings(list)
-    } catch (err) {
-      setActionError(err.message || 'Не удалось сохранить объявление')
-    } finally {
-      setListingSaveBusy(false)
-    }
-  }
-
-  const handleCreateListing = async (e) => {
-    e.preventDefault()
-    setActionError(null)
-    try {
-      await api.createListing({
-        title: listingForm.title.trim(),
-        offering_summary: listingForm.offering_summary.trim(),
-        seeking_summary: listingForm.seeking_summary.trim(),
-        description: listingForm.description.trim() || null,
-        status: 'published',
-      })
-      setListingForm({ title: '', offering_summary: '', seeking_summary: '', description: '' })
-      setListingOpen(false)
-      const [prof, list] = await Promise.all([api.myProfile(), api.listings({ author_id: userId })])
-      setProfile(prof)
-      setMyListings(list)
-    } catch (err) {
-      setActionError(err.message || 'Не удалось создать объявление')
-    }
-  }
-
-  const handleCopyToken = async () => {
-    if (!token) return
-    try {
-      await navigator.clipboard.writeText(token)
-      setTokenCopied(true)
-      setTimeout(() => setTokenCopied(false), 2000)
-    } catch {
-      setActionError('Не удалось скопировать токен')
-    }
-  }
-
-  if (loading) {
-    return (
-      <p className="py-16 text-center text-sm text-slate-400">Загрузка профиля…</p>
-    )
-  }
-
-  if (error) {
-    return (
-      <p className="py-16 text-center text-sm text-red-400">{error}</p>
-    )
-  }
-
   const handleUpdateProfile = async (payload) => {
-    const updated = await api.updateMe(payload)
-    setProfile(updated)
-    setNameInput(updated.full_name ?? '')
-    setEditingName(false)
+    setSaveError(null)
+    try {
+      const updated = await api.updateMe(payload)
+      setProfile(updated)
+      setNameInput(updated.full_name ?? '')
+      setEditingName(false)
+    } catch (err) {
+      setSaveError(err.message || 'Не удалось сохранить')
+    }
   }
 
   const handleUpdateSkills = async (payload) => {
@@ -591,7 +537,13 @@ function ProfilePage() {
     // Открываем и загружаем
     setInterestState((prev) => ({
       ...prev,
-      [listingId]: { open: true, interests: cur?.interests ?? [], loading: true, error: null, accepting: null },
+      [listingId]: {
+        open: true,
+        interests: cur?.interests ?? [],
+        loading: true,
+        error: null,
+        accepting: null,
+      },
     }))
     try {
       const data = await api.listingInterests(listingId)
@@ -608,7 +560,10 @@ function ProfilePage() {
   }
 
   const handleAccept = async (listingId, responderId) => {
-    setInterestState((prev) => ({ ...prev, [listingId]: { ...prev[listingId], accepting: responderId } }))
+    setInterestState((prev) => ({
+      ...prev,
+      [listingId]: { ...prev[listingId], accepting: responderId },
+    }))
     try {
       await api.acceptInterest(listingId, responderId)
       // Перезагружаем отклики и объявления
@@ -628,15 +583,6 @@ function ProfilePage() {
       }))
     }
   }
-
-  const initials = profile?.full_name
-    ? profile.full_name
-        .split(' ')
-        .map((w) => w[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    : (email?.[0] ?? '?').toUpperCase()
 
   if (loading) {
     return (
@@ -769,258 +715,230 @@ function ProfilePage() {
         <div className="space-y-8 lg:col-span-3">
           {activeSection === 'security' ? <SecuritySection /> : null}
           {activeSection === 'notifications' ? <NotificationsSection /> : null}
-          {activeSection !== 'settings' ? null : <>
-          {/* Мои навыки */}
-          <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
-            <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
-                <h3 className="text-2xl font-black uppercase italic text-white">Мои навыки</h3>
-                <p className="mt-2 text-xs font-medium text-slate-500">
-                  Управляйте навыками для матчмейкинга.
-                </p>
-              </div>
-            </div>
-
-            <OnboardingBanner
-              profile={profile}
-              onSave={handleUpdateProfile}
-              mySkills={mySkills}
-              onSkillsSave={handleUpdateSkills}
-            />
-          </div>
-
-          {/* Мои объявления */}
-          <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
-            <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
-                <h3 className="text-2xl font-black uppercase italic text-white">
-                  Мои объявления
-                </h3>
-                <p className="mt-2 text-xs font-medium text-slate-500">
-                  Ваши активные предложения в сети.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/deals', { state: { openCreate: true } })}
-                className="rounded-xl bg-indigo-500 p-2 text-white transition hover:bg-indigo-400"
-                aria-label="Добавить объявление"
-              >
-                <PlusCircle size={20} />
-              </button>
-            </div>
-
-            {myListings.length > 0 ? (
-              <ul className="space-y-3">
-                {myListings.map((l) => {
-                  const ist = interestState[l.id]
-                  const pendingCount = ist?.interests?.filter((i) => i.status === 'pending').length ?? 0
-                  return (
-                    <li
-                      key={l.id}
-                      className="rounded-2xl border border-white/5 bg-white/5"
-                    >
-                      {/* Строка объявления */}
-                      <div className="flex items-start justify-between gap-3 p-4">
-                        <div className="min-w-0 flex-1 text-sm">
-                          <p className="font-bold text-white">{l.title}</p>
-                          <p className="mt-1 text-xs text-slate-400">
-                            Предлагает: {l.offering_summary}
-                          </p>
-                          <p className="text-xs text-slate-400">Ищет: {l.seeking_summary}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => toggleInterests(l.id)}
-                          className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10"
-                        >
-                          {pendingCount > 0 ? (
-                            <span className="flex size-4 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-black text-white">
-                              {pendingCount}
-                            </span>
-                          ) : null}
-                          Отклики
-                          {ist?.open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                        </button>
-                      </div>
-
-                      {/* Список откликов */}
-                      {ist?.open ? (
-                        <div className="border-t border-white/5 px-4 pb-4 pt-3">
-                          {ist.loading ? (
-                            <LoadingHint label="Загружаем отклики…" />
-                          ) : ist.error ? (
-                            <p className="text-xs text-red-400">{ist.error}</p>
-                          ) : ist.interests.length === 0 ? (
-                            <p className="text-xs text-slate-500">Откликов пока нет.</p>
-                          ) : (
-                            <ul className="space-y-2">
-                              {ist.interests.map((interest) => (
-                                <li
-                                  key={interest.id}
-                                  className="flex items-start justify-between gap-3 rounded-xl border border-white/5 bg-black/20 p-3"
-                                >
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-bold text-slate-300">
-                                      Пользователь #{interest.responder_id}
-                                    </p>
-                                    {interest.message ? (
-                                      <p className="mt-1 text-xs text-slate-500 line-clamp-2">
-                                        {interest.message}
-                                      </p>
-                                    ) : null}
-                                    <span className={`mt-1 inline-block text-[9px] font-black uppercase tracking-widest ${
-                                      interest.status === 'pending' ? 'text-amber-400' :
-                                      interest.status === 'accepted' ? 'text-green-400' :
-                                      'text-slate-500'
-                                    }`}>
-                                      {interest.status === 'pending' ? 'Ожидает' :
-                                       interest.status === 'accepted' ? 'Принят' : 'Отклонён'}
-                                    </span>
-                                  </div>
-                                  {interest.status === 'pending' ? (
-                                    <div className="flex shrink-0 gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleAccept(l.id, interest.responder_id)}
-                                        disabled={ist.accepting === interest.responder_id}
-                                        className="flex items-center gap-1 rounded-lg bg-green-600/20 px-2.5 py-1.5 text-[10px] font-bold text-green-400 transition hover:bg-green-600/30 disabled:opacity-50"
-                                      >
-                                        <UserCheck size={12} />
-                                        {ist.accepting === interest.responder_id ? '…' : 'Принять'}
-                                      </button>
-                                    </div>
-                                  ) : null}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ) : null}
-                    </li>
-                  )
-                })}
-              </ul>
-            ) : (
-              <p className="text-sm text-slate-500">
-                У вас пока нет объявлений. Создайте первое на странице Сделки.
-              </p>
-            )}
-          </div>
-
-          {/* Trust Factors */}
-          <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
-            <h3 className="mb-6 text-lg font-black uppercase italic text-white">Доверие</h3>
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="rounded-lg bg-green-500/10 p-2 text-green-400">
-                    <CheckCircle2 size={16} />
+          {activeSection !== 'settings' ? null : (
+            <>
+              {/* Мои навыки */}
+              <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
+                <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                  <div>
+                    <h3 className="text-2xl font-black uppercase italic text-white">Мои навыки</h3>
+                    <p className="mt-2 text-xs font-medium text-slate-500">
+                      Управляйте навыками для матчмейкинга.
+                    </p>
                   </div>
-                  <span className="text-sm font-bold text-slate-300">Аккаунт создан</span>
                 </div>
-                <span className="text-[10px] font-black text-green-500">OK</span>
+
+                <OnboardingBanner
+                  profile={profile}
+                  onSave={handleUpdateProfile}
+                  mySkills={mySkills}
+                  onSkillsSave={handleUpdateSkills}
+                />
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`rounded-lg p-2 ${isProfileComplete(profile) ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}
+
+              {/* Мои объявления */}
+              <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
+                <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                  <div>
+                    <h3 className="text-2xl font-black uppercase italic text-white">
+                      Мои объявления
+                    </h3>
+                    <p className="mt-2 text-xs font-medium text-slate-500">
+                      Ваши активные предложения в сети.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/deals', { state: { openCreate: true } })}
+                    className="rounded-xl bg-indigo-500 p-2 text-white transition hover:bg-indigo-400"
+                    aria-label="Добавить объявление"
                   >
-                    <Award size={16} />
-                  </div>
-                  <span className="text-sm font-bold text-slate-300">Профиль заполнен</span>
+                    <PlusCircle size={20} />
+                  </button>
                 </div>
-                <span
-                  className={`text-[10px] font-black ${isProfileComplete(profile) ? 'text-green-500' : 'text-amber-400'}`}
-                >
-                  {isProfileComplete(profile) ? 'OK' : 'ТРЕБУЕТСЯ'}
-                </span>
+
+                {myListings.length > 0 ? (
+                  <ul className="space-y-3">
+                    {myListings.map((l) => {
+                      const ist = interestState[l.id]
+                      const pendingCount =
+                        ist?.interests?.filter((i) => i.status === 'pending').length ?? 0
+                      return (
+                        <li key={l.id} className="rounded-2xl border border-white/5 bg-white/5">
+                          {/* Строка объявления */}
+                          <div className="flex items-start justify-between gap-3 p-4">
+                            <div className="min-w-0 flex-1 text-sm">
+                              <p className="font-bold text-white">{l.title}</p>
+                              <p className="mt-1 text-xs text-slate-400">
+                                Предлагает: {l.offering_summary}
+                              </p>
+                              <p className="text-xs text-slate-400">Ищет: {l.seeking_summary}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => toggleInterests(l.id)}
+                              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold text-slate-300 transition hover:bg-white/10"
+                            >
+                              {pendingCount > 0 ? (
+                                <span className="flex size-4 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-black text-white">
+                                  {pendingCount}
+                                </span>
+                              ) : null}
+                              Отклики
+                              {ist?.open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            </button>
+                          </div>
+
+                          {/* Список откликов */}
+                          {ist?.open ? (
+                            <div className="border-t border-white/5 px-4 pb-4 pt-3">
+                              {ist.loading ? (
+                                <LoadingHint label="Загружаем отклики…" />
+                              ) : ist.error ? (
+                                <p className="text-xs text-red-400">{ist.error}</p>
+                              ) : ist.interests.length === 0 ? (
+                                <p className="text-xs text-slate-500">Откликов пока нет.</p>
+                              ) : (
+                                <ul className="space-y-2">
+                                  {ist.interests.map((interest) => (
+                                    <li
+                                      key={interest.id}
+                                      className="flex items-start justify-between gap-3 rounded-xl border border-white/5 bg-black/20 p-3"
+                                    >
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-bold text-slate-300">
+                                          Пользователь #{interest.responder_id}
+                                        </p>
+                                        {interest.message ? (
+                                          <p className="mt-1 text-xs text-slate-500 line-clamp-2">
+                                            {interest.message}
+                                          </p>
+                                        ) : null}
+                                        <span
+                                          className={`mt-1 inline-block text-[9px] font-black uppercase tracking-widest ${
+                                            interest.status === 'pending'
+                                              ? 'text-amber-400'
+                                              : interest.status === 'accepted'
+                                                ? 'text-green-400'
+                                                : 'text-slate-500'
+                                          }`}
+                                        >
+                                          {interest.status === 'pending'
+                                            ? 'Ожидает'
+                                            : interest.status === 'accepted'
+                                              ? 'Принят'
+                                              : 'Отклонён'}
+                                        </span>
+                                      </div>
+                                      {interest.status === 'pending' ? (
+                                        <div className="flex shrink-0 gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleAccept(l.id, interest.responder_id)
+                                            }
+                                            disabled={ist.accepting === interest.responder_id}
+                                            className="flex items-center gap-1 rounded-lg bg-green-600/20 px-2.5 py-1.5 text-[10px] font-bold text-green-400 transition hover:bg-green-600/30 disabled:opacity-50"
+                                          >
+                                            <UserCheck size={12} />
+                                            {ist.accepting === interest.responder_id
+                                              ? '…'
+                                              : 'Принять'}
+                                          </button>
+                                        </div>
+                                      ) : null}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          ) : null}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    У вас пока нет объявлений. Создайте первое на странице Сделки.
+                  </p>
+                )}
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="rounded-lg bg-slate-500/10 p-2 text-slate-400">
-                    <Zap size={16} />
-                  </div>
-                  <span className="text-sm font-bold text-slate-300">Рейтинг матчинга</span>
-                </div>
-                <span className="text-[10px] font-black text-white">
-                  {isProfileComplete(profile) ? 'Активен' : '-15% штраф'}
-                </span>
-              </div>
-            </div>
-          </div>
-          {receivedReviews.length > 0 ? (
-            <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
-              <h3 className="mb-6 text-lg font-black uppercase italic text-white">
-                Отзывы обо мне
-                <span className="ml-3 text-sm font-normal text-slate-500">({receivedReviews.length})</span>
-              </h3>
-              <div className="space-y-4">
-                {receivedReviews.slice(0, 8).map((r) => (
-                  <div key={r.id} className="rounded-2xl border border-white/5 bg-white/5 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-white">
-                          {r.reviewer_name ?? `Пользователь #${r.reviewer_id}`}
-                        </p>
-                        {r.comment ? (
-                          <p className="mt-1 text-xs text-slate-400">{r.comment}</p>
-                        ) : null}
+
+              {/* Trust Factors */}
+              <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
+                <h3 className="mb-6 text-lg font-black uppercase italic text-white">Доверие</h3>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="rounded-lg bg-green-500/10 p-2 text-green-400">
+                        <CheckCircle2 size={16} />
                       </div>
-                      <span className="shrink-0 text-amber-400 text-sm">
-                        {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
-                      </span>
+                      <span className="text-sm font-bold text-slate-300">Аккаунт создан</span>
                     </div>
+                    <span className="text-[10px] font-black text-green-500">OK</span>
                   </div>
-                ))}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div
+                        className={`rounded-lg p-2 ${isProfileComplete(profile) ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'}`}
+                      >
+                        <Award size={16} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-300">Профиль заполнен</span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-black ${isProfileComplete(profile) ? 'text-green-500' : 'text-amber-400'}`}
+                    >
+                      {isProfileComplete(profile) ? 'OK' : 'ТРЕБУЕТСЯ'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="rounded-lg bg-slate-500/10 p-2 text-slate-400">
+                        <Zap size={16} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-300">Рейтинг матчинга</span>
+                    </div>
+                    <span className="text-[10px] font-black text-white">
+                      {isProfileComplete(profile) ? 'Активен' : '-15% штраф'}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : null}
-          </>}
+              {receivedReviews.length > 0 ? (
+                <div className="rounded-[40px] border border-white/5 bg-slate-900 p-8">
+                  <h3 className="mb-6 text-lg font-black uppercase italic text-white">
+                    Отзывы обо мне
+                    <span className="ml-3 text-sm font-normal text-slate-500">
+                      ({receivedReviews.length})
+                    </span>
+                  </h3>
+                  <div className="space-y-4">
+                    {receivedReviews.slice(0, 8).map((r) => (
+                      <div key={r.id} className="rounded-2xl border border-white/5 bg-white/5 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-white">
+                              {r.reviewer_name ?? `Пользователь #${r.reviewer_id}`}
+                            </p>
+                            {r.comment ? (
+                              <p className="mt-1 text-xs text-slate-400">{r.comment}</p>
+                            ) : null}
+                          </div>
+                          <span className="shrink-0 text-amber-400 text-sm">
+                            {'★'.repeat(r.rating)}
+                            {'☆'.repeat(5 - r.rating)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
         </div>
       </div>
-
-      {editOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-profile-title"
-        >
-          <form
-            onSubmit={handleSaveName}
-            className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6"
-          >
-            <h2 id="edit-profile-title" className="mb-4 text-lg font-black text-white">
-              Редактировать профиль
-            </h2>
-            <label className="block text-left text-xs text-slate-400">
-              Имя
-              <input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
-                placeholder="Как вас показывать в сети"
-              />
-            </label>
-            <div className="mt-6 flex gap-2">
-              <button
-                type="submit"
-                className="flex-1 rounded-xl bg-indigo-600 py-2 text-xs font-black uppercase text-white"
-              >
-                Сохранить
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditOpen(false)}
-                className="flex-1 rounded-xl border border-white/10 py-2 text-xs text-slate-400"
-              >
-                Отмена
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : null}
     </div>
   )
 }

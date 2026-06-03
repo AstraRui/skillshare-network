@@ -15,7 +15,8 @@
 | Слой | Технология | Почему |
 | --- | --- | --- |
 | Backend | Python 3.12 + FastAPI | Максимальная скорость, асинхронность, мощная типизация (Pydantic) |
-| Linter / Formatter | Ruff | Заменяет Flake8, Black и Isort. Молниеносная проверка кода |
+| Backend lint / format | Ruff | Заменяет Flake8, Black и Isort |
+| Frontend lint / format | ESLint + Prettier | Проверка React-кода и единый стиль |
 | Frontend | React + Vite | Современный компонентный подход, быстрая разработка |
 | UI-компоненты | TailwindCSS | Профессиональный UI с минимальными стилями |
 | ORM | SQLAlchemy 2.0 + Alembic | Работа со сложным SQL и рекурсиями для матчинга цепочек |
@@ -40,6 +41,10 @@
 
 - `backend/`: FastAPI-приложение, DB слой и миграции Alembic
 - `frontend/`: React-приложение (Vite + TailwindCSS)
+  - `frontend/src/`: страницы, компоненты, API-клиент
+  - `frontend/src/admin/`: UI админ-панели (React)
+- `Documentation/`: описание, архитектура, диаграммы, инструкции по секретам
+- `secrets/`: локальные файлы для Docker prod (не в git)
 - `docker-compose.yml`: PostgreSQL + backend
 
 ## Быстрый старт (локально)
@@ -56,12 +61,64 @@ uv run uvicorn app.main:app --reload
 - `http://localhost:8000/` (SSR страница)
 - `http://localhost:8000/api/health` (healthcheck)
 
-### Ruff
+### Проверка и форматирование кода
+
+Установка инструментов (один раз):
 
 ```bash
+make install-tools
+```
+
+Проверка стиля (как на CI):
+
+```bash
+make lint
+```
+
+Автоформатирование:
+
+```bash
+make format
+```
+
+Исправление lint с автофиксом:
+
+```bash
+make lint-fix
+```
+
+Аудит уязвимостей Python-зависимостей:
+
+```bash
+make audit-deps
+```
+
+| Слой | Линтер | Форматтер |
+| --- | --- | --- |
+| Backend (Python 3.12) | [Ruff](https://docs.astral.sh/ruff/) (`ruff check`) | Ruff (`ruff format`) |
+| Frontend (React + Vite) | [ESLint](https://eslint.org/) (`npm run lint`) | [Prettier](https://prettier.io/) (`npm run format`) |
+
+Отдельно по каталогам:
+
+```bash
+# Backend
 cd backend
 uv run ruff check .
 uv run ruff format .
+
+# Frontend
+cd frontend
+npm run lint
+npm run format:check   # только проверка
+npm run format         # записать исправления
+```
+
+Опционально — хуки перед коммитом ([pre-commit](https://pre-commit.com/)):
+
+```bash
+pip install pre-commit   # или: uv tool install pre-commit
+pre-commit install
+pre-commit run --all-files
 ```
 
 ## Запуск через Docker

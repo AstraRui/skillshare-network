@@ -73,10 +73,9 @@ function MatchingPage() {
   // Если есть зафиксированный клик — показываем его, иначе hover
   // Панель остаётся пока пользователь не кликнет ещё раз или не нажмёт X
   const activeId = selectedNode ?? hoveredNode
-  const panelNode = selectedNode != null
-    ? nodes.find((n) => n.id === selectedNode)
-    : null
-  const activeNode = panelNode ?? (hoveredNode != null ? nodes.find((n) => n.id === hoveredNode) : null)
+  const panelNode = selectedNode != null ? nodes.find((n) => n.id === selectedNode) : null
+  const activeNode =
+    panelNode ?? (hoveredNode != null ? nodes.find((n) => n.id === hoveredNode) : null)
 
   const handleWrite = async () => {
     if (!activeNode) return
@@ -95,10 +94,7 @@ function MatchingPage() {
   const nodeStyle = (n) => ({
     left: `${(n.x / VIEW_W) * 100}%`,
     top: `${(n.y / VIEW_H) * 100}%`,
-    transform:
-      activeId === n.id
-        ? 'translate(-50%, -50%) scale(1.12)'
-        : 'translate(-50%, -50%)',
+    transform: activeId === n.id ? 'translate(-50%, -50%) scale(1.12)' : 'translate(-50%, -50%)',
   })
 
   if (!isAuthenticated) {
@@ -235,36 +231,31 @@ function MatchingPage() {
                   </p>
                   {activeNode.skillsIGet.length > 0 ? (
                     <p className="mt-1 text-[10px] text-slate-400">
-                      Получу:{' '}
-                      {activeNode.skillsIGet
-                        .map((s) => s.skill_name)
-                        .join(', ')}
+                      Получу: {activeNode.skillsIGet.map((s) => s.skill_name).join(', ')}
                     </p>
                   ) : null}
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  {writeError ? (
-                    <p className="text-[10px] text-red-400">{writeError}</p>
-                  ) : null}
+                  {writeError ? <p className="text-[10px] text-red-400">{writeError}</p> : null}
                   <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void handleWrite()}
-                    disabled={writing}
-                    className="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-indigo-500 disabled:opacity-50"
-                  >
-                    {writing ? 'Подключаем…' : 'Написать'}
-                  </button>
-                  {selectedNode != null ? (
                     <button
                       type="button"
-                      onClick={() => setSelectedNode(null)}
-                      className="rounded-xl border border-white/10 p-2 text-slate-400 transition hover:text-white"
-                      aria-label="Закрыть"
+                      onClick={() => void handleWrite()}
+                      disabled={writing}
+                      className="rounded-xl bg-indigo-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-indigo-500 disabled:opacity-50"
                     >
-                      <X size={14} />
+                      {writing ? 'Подключаем…' : 'Написать'}
                     </button>
-                  ) : null}
+                    {selectedNode != null ? (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedNode(null)}
+                        className="rounded-xl border border-white/10 p-2 text-slate-400 transition hover:text-white"
+                        aria-label="Закрыть"
+                      >
+                        <X size={14} />
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               </div>
