@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_session
+from app.api.openapi_responses import AUTH_ERRORS_FULL
 from app.crud.chat import create_chat, get_chat_by_exchange
 from app.models.exchange import Exchange, ExchangeParticipant, ExchangeStatus
 from app.models.listing import Listing, ListingInterest, ListingInterestStatus
@@ -28,7 +29,7 @@ from app.schemas.exchange import (
 )
 from app.ws.manager import manager
 
-router = APIRouter(prefix="/exchanges", tags=["exchanges"])
+router = APIRouter(prefix="/exchanges", tags=["exchanges"], responses=AUTH_ERRORS_FULL)
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -102,7 +103,12 @@ async def _broadcast_exchange_update(
     )
 
 
-@router.post("/listing/{listing_id}/accept-interest", response_model=ExchangeOut)
+@router.post(
+    "/listing/{listing_id}/accept-interest",
+    response_model=ExchangeOut,
+    summary="Принять отклик",
+    description="Автор объявления принимает отклик и создаёт сделку + чат. 404 — listing/interest не найден.",
+)
 async def accept_listing_interest(
     listing_id: int,
     payload: AcceptInterestRequest,
@@ -176,7 +182,12 @@ async def accept_listing_interest(
     return exchange
 
 
-@router.post("/direct", response_model=ExchangeOut)
+@router.post(
+    "/direct",
+    response_model=ExchangeOut,
+    summary="Прямой обмен",
+    description="Создание сделки без объявления при взаимном совпадении навыков.",
+)
 async def create_direct_exchange(
     payload: DirectExchangeRequest,
     db: DbSession,
@@ -243,7 +254,12 @@ async def create_direct_exchange(
     )
 
 
-@router.get("", response_model=list[ExchangeOut])
+@router.get(
+    "",
+    response_model=list[ExchangeOut],
+    summary="Мои сделки",
+    description="Все обмены, где текущий пользователь — участник.",
+)
 async def get_my_exchanges(db: DbSession, current_user: CurrentUser) -> list[ExchangeOut]:
     initiator_ids = set(
         await db.scalars(
@@ -339,7 +355,12 @@ async def get_my_exchanges(db: DbSession, current_user: CurrentUser) -> list[Exc
     ]
 
 
-@router.post("/{exchange_id}/status", response_model=ExchangeOut)
+@router.post(
+    "/{exchange_id}/status",
+    response_model=ExchangeOut,
+    summary="Сменить статус сделки",
+    description="Переход discussion → active → completed / cancelled.",
+)
 async def update_exchange_status(
     exchange_id: int,
     payload: ExchangeStatusUpdate,
@@ -373,7 +394,12 @@ async def update_exchange_status(
     return exchange
 
 
-@router.post("/{exchange_id}/request-start", response_model=ExchangeOut)
+@router.post(
+    "/{exchange_id}/request-start",
+    response_model=ExchangeOut,
+    summary="Запросить старт обмена",
+    description="Один участник запрашивает переход в active; требуется подтверждение партнёра.",
+)
 async def request_start_exchange(
     exchange_id: int,
     db: DbSession,
@@ -418,7 +444,12 @@ async def request_start_exchange(
     return exchange
 
 
-@router.post("/{exchange_id}/confirm-completion", response_model=ExchangeOut)
+@router.post(
+    "/{exchange_id}/confirm-completion",
+    response_model=ExchangeOut,
+    summary="Подтвердить завершение",
+    description="Оба участника подтверждают завершение — сделка переходит в completed.",
+)
 async def confirm_exchange_completion(
     exchange_id: int,
     db: DbSession,
@@ -453,7 +484,12 @@ async def confirm_exchange_completion(
     return exchange
 
 
-@router.get("/{exchange_id}/messages", response_model=list[MessageOut])
+@router.get(
+    "/{exchange_id}/messages",
+    response_model=list[MessageOut],
+    summary="Сообщения сделки",
+    description="История переписки внутри обмена. Только участники — иначе 403.",
+)
 async def get_exchange_messages(
     exchange_id: int,
     db: DbSession,
@@ -478,7 +514,11 @@ async def get_exchange_messages(
 
 
 @router.post(
-    "/{exchange_id}/messages", response_model=MessageOut, status_code=status.HTTP_201_CREATED
+    "/{exchange_id}/messages",
+    response_model=MessageOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Отправить сообщение",
+    description="Новое сообщение в чате сделки. Успех — 201. Завершённая сделка — 400 (read-only).",
 )
 async def post_exchange_message(
     exchange_id: int,
@@ -530,7 +570,12 @@ async def post_exchange_message(
     return message
 
 
-@router.get("/{exchange_id}/reviews", response_model=list[ReviewOut])
+@router.get(
+    "/{exchange_id}/reviews",
+    response_model=list[ReviewOut],
+    summary="Отзывы по сделке",
+    description="Отзывы участников после завершения обмена.",
+)
 async def get_exchange_reviews(
     exchange_id: int,
     db: DbSession,
@@ -566,7 +611,11 @@ async def get_exchange_reviews(
 
 
 @router.post(
-    "/{exchange_id}/reviews", response_model=ReviewOut, status_code=status.HTTP_201_CREATED
+    "/{exchange_id}/reviews",
+    response_model=ReviewOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Оставить отзыв",
+    description="Оценка партнёра (1–5) после completed. Успех — 201 Created.",
 )
 async def create_exchange_review(
     exchange_id: int,

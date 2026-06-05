@@ -6,6 +6,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError
@@ -24,6 +25,18 @@ from app.logging.logging_middleware import logging_middleware
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 
+OPENAPI_TAGS = [
+    {"name": "health", "description": "Проверка доступности API и подключения к БД."},
+    {"name": "Auth", "description": "Регистрация и вход. Возвращает JWT access_token."},
+    {"name": "users", "description": "Профиль текущего пользователя, навыки, пароль, отзывы."},
+    {"name": "skills", "description": "Справочник категорий и навыков."},
+    {"name": "listings", "description": "Объявления об обмене навыками и отклики."},
+    {"name": "exchanges", "description": "Сделки (обмены), сообщения и отзывы внутри сделки."},
+    {"name": "matches", "description": "Рекомендации пар для обмена (матчмейкинг)."},
+    {"name": "chat", "description": "Чат сделки: просмотр, редактирование и удаление сообщений."},
+    {"name": "Admin", "description": "Модерация пользователей, объявлений, сделок и чатов (роль admin)."},
+]
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -37,8 +50,38 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
+        description=(
+            "REST API платформы SkillShare Network. "
+            "Большинство эндпоинтов требуют заголовок `Authorization: Bearer <JWT>`. "
+            "Получите токен через `POST /api/v1/auth/login`."
+        ),
+        version="1.0.0",
         lifespan=lifespan,
+        openapi_tags=OPENAPI_TAGS,
     )
+
+    def custom_openapi() -> dict:
+        if app.openapi_schema:
+            return app.openapi_schema
+        schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes,
+            tags=OPENAPI_TAGS,
+        )
+        schema.setdefault("components", {}).setdefault("securitySchemes", {})[
+            "BearerAuth"
+        ] = {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "JWT из ответа POST /api/v1/auth/login",
+        }
+        app.openapi_schema = schema
+        return app.openapi_schema
+
+    app.openapi = custom_openapi  # type: ignore[method-assign]
 
     app.middleware("http")(logging_middleware)
 

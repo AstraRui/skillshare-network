@@ -15,8 +15,23 @@ router = APIRouter(prefix="/health", tags=["health"])
 DB = Annotated[AsyncSession, Depends(get_db_session)]
 
 
-@router.get("")
+@router.get(
+    "",
+    summary="Healthcheck",
+    description="Проверяет доступность API и соединение с PostgreSQL. Аутентификация не требуется.",
+    responses={
+        200: {
+            "description": "Сервис доступен (200 OK)",
+            "content": {
+                "application/json": {
+                    "example": {"status": "ok", "db": "ok"},
+                }
+            },
+        },
+    },
+)
 async def health(db: DB) -> dict[str, str]:
+    """Возвращает `status: ok` и состояние БД (`db: ok` или описание ошибки)."""
     try:
         await db.execute(text("SELECT 1"))
         db_status = "ok"

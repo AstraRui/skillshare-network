@@ -14,6 +14,32 @@ SkillShare Network предоставляет REST API под префиксом
 
 Корень `/` перенаправляет на `/docs` (`backend/app/main.py`).
 
+## Проверка OpenAPI (пара 5)
+
+После запуска бэкенда откройте Swagger UI и убедитесь:
+
+| Что проверить | Где в Swagger |
+| --- | --- |
+| Группы эндпоинтов (tags) | Заголовки: Auth, users, listings, exchanges, … |
+| Описания операций | `summary` и `description` у каждого метода |
+| Схемы запросов | Примеры полей в Models (email, password, title, …) |
+| Коды ошибок | Responses: 400, 401, 404, 409, 422 с примерами `detail` |
+| Успешные ответы | 200 OK, 201 Created, 204 No Content |
+| JWT | Кнопка **Authorize** → `Bearer <token>` |
+
+Описания и примеры ошибок задаются в коде:
+
+- `backend/app/api/openapi_responses.py` — общие ответы 400/401/404/…
+- `backend/app/api/v1/*.py` — `summary`, `description`, `responses` на роутерах
+- `backend/app/schemas/*.py` — `Field(description=…, examples=[…])`
+- `backend/app/main.py` — метаданные OpenAPI и схема `BearerAuth`
+
+Экспорт схемы для отчёта:
+
+```bash
+curl -s http://localhost:8000/openapi.json -o Documentation/openapi/openapi.json
+```
+
 ## Аутентификация
 
 Большинство эндпоинтов требуют заголовок:
