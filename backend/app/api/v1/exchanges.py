@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -31,6 +32,7 @@ from app.ws.manager import manager
 
 router = APIRouter(prefix="/exchanges", tags=["exchanges"], responses=AUTH_ERRORS_FULL)
 
+logger = logging.getLogger("app.database")
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
@@ -657,6 +659,12 @@ async def create_exchange_review(
     try:
         await db.flush()
     except IntegrityError as exc:
+        logger.error(
+            "Review creation failed: database integrity error exchange_id=%d reviewer_id=%d",
+            exchange_id,
+            current_user.id,
+            exc_info=True,
+        )
         raise HTTPException(status_code=409, detail="You have already submitted a review") from exc
 
     avg_rating = await db.scalar(
@@ -672,4 +680,12 @@ async def create_exchange_review(
         await db.flush()
 
     await db.refresh(review)
+    logger.info(
+        "Review created review_id=%d exchange_id=%d reviewer_id=%d reviewed_id=%d rating=%d",
+        review.id,
+        exchange_id,
+        current_user.id,
+        reviewed_id,
+        payload.rating,
+    )
     return review

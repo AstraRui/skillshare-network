@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Annotated
 
 import jwt
@@ -15,6 +16,8 @@ from app.models.user import User
 
 __all__ = ["get_db_session", "get_current_user"]
 
+logger = logging.getLogger("app.auth")
+
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 
 
@@ -24,6 +27,7 @@ async def get_current_user(
 ) -> User:
     """Валидирует Bearer JWT и возвращает текущего пользователя."""
     if authorization is None or not authorization.startswith("Bearer "):
+        logger.warning("JWT validation failed: missing or invalid Authorization header")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing or invalid Authorization header",
@@ -33,14 +37,22 @@ async def get_current_user(
 
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
-    except jwt.PyJWTError as exc:
+    except jwt.ExpiredSignatureError:
+        logger.warning("JWT validation failed: token expired")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
-        ) from exc
+        ) from None
+    except jwt.PyJWTError:
+        logger.error("JWT validation failed: invalid token signature or format", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        ) from None
 
     user_id = payload.get("sub")
     if user_id is None:
+        logger.warning("JWT validation failed: missing sub claim in payload")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
@@ -48,6 +60,7 @@ async def get_current_user(
 
     user = await db.scalar(select(User).where(User.id == int(user_id), User.is_deleted.is_(False)))
     if user is None:
+        logger.warning("JWT valid but user not found or blocked user_id=%s", user_id)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or blocked",

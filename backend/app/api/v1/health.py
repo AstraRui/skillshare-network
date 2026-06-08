@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -12,6 +13,7 @@ from app.db.session import get_db_session
 
 router = APIRouter(prefix="/health", tags=["health"])
 
+logger = logging.getLogger("app.database")
 DB = Annotated[AsyncSession, Depends(get_db_session)]
 
 
@@ -36,5 +38,6 @@ async def health(db: DB) -> dict[str, str]:
         await db.execute(text("SELECT 1"))
         db_status = "ok"
     except Exception as e:
+        logger.critical("Health check: PostgreSQL unavailable", exc_info=True)
         db_status = f"error: {e}"
     return {"status": "ok", "db": db_status}

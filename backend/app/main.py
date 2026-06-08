@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -18,7 +19,7 @@ from app.api.errors import (
 )
 from app.api.router import router as api_router
 from app.core.settings import settings
-from app.db.session import engine
+from app.db.session import check_database_connection, engine
 from app.logging.logging_config import setup_logging
 from app.logging.logging_middleware import logging_middleware
 
@@ -41,9 +42,21 @@ OPENAPI_TAGS = [
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging()
+    startup_logger = logging.getLogger("app.startup")
+    startup_logger.info(
+        "Starting %s environment=%s",
+        settings.app_name,
+        settings.environment,
+    )
+
+    if not await check_database_connection():
+        startup_logger.warning(
+            "Application started without database — API requests may return errors"
+        )
 
     yield
 
+    startup_logger.info("Shutting down %s", settings.app_name)
     await engine.dispose()
 
 

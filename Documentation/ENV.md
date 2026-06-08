@@ -14,6 +14,13 @@
 | `SSN_DATABASE_URL` | `database_url` | `postgresql+asyncpg://db_user:db_pass@db_host:5432/skillshare` | URL PostgreSQL (драйвер `asyncpg`) |
 | `SSN_REDIS_URL` | `redis_url` | `redis://redis_host:6379/0` | URL Redis |
 | `SSN_PUBLIC_BASE_URL` | `public_base_url` | `https://app.example.com` | Публичный базовый URL приложения (опционально) |
+| `SSN_LOG_LEVEL` | `log_level` | `INFO` | Уровень логирования: DEBUG, INFO, WARNING, ERROR, CRITICAL |
+| `SSN_LOG_DIR` | `log_dir` | `logs` | Каталог файлов логов (в `.gitignore`) |
+| `SSN_LOG_FILE` | `log_file` | `app.log` | Имя основного лог-файла |
+| `SSN_LOG_MAX_BYTES` | `log_max_bytes` | `10485760` | Ротация: макс. размер файла (10 МБ) |
+| `SSN_LOG_BACKUP_COUNT` | `log_backup_count` | `5` | Ротация: число архивных копий |
+
+Подробнее: [LOGGING.md](./LOGGING.md).
 
 ### Примеры по средам
 

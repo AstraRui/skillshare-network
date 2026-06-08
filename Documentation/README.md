@@ -14,6 +14,7 @@
 | [PRODUCTION-SECRETS.md](./PRODUCTION-SECRETS.md) | Администратор | Файлы секретов для production Compose (не в git) |
 | [Architecture.md](./Architecture.md) | Разработчик | Слои системы, потоки данных, стек |
 | [DEVELOPMENT.md](./DEVELOPMENT.md) | Разработчик | Ruff, ESLint, pre-commit, CI |
+| [LOGGING.md](./LOGGING.md) | DevOps, разработчик | Логирование, ротация, тест сбоев БД |
 
 ## Интерактивная API-документация
 

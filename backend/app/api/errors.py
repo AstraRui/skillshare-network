@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
+
+logger = logging.getLogger("app.errors")
 
 
 def _validation_detail_message(err: dict) -> str:
@@ -25,11 +29,20 @@ async def http_exception_handler(_request: Request, exc: HTTPException) -> JSONR
     detail = exc.detail
     if not isinstance(detail, str):
         detail = str(detail)
+
+    if exc.status_code >= 500:
+        logger.error("HTTP %d: %s", exc.status_code, detail)
+    elif exc.status_code == 401:
+        logger.warning("HTTP 401: %s", detail)
+    elif exc.status_code >= 400:
+        logger.warning("HTTP %d: %s", exc.status_code, detail)
+
     return JSONResponse(status_code=exc.status_code, content={"detail": detail})
 
 
 async def integrity_error_handler(_request: Request, exc: IntegrityError) -> JSONResponse:
     message = str(exc.orig) if exc.orig else str(exc)
+    logger.error("Database integrity error: %s", message, exc_info=True)
     if "users_email" in message or "email" in message.lower():
         return JSONResponse(
             status_code=409,

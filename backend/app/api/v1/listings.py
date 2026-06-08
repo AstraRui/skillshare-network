@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -24,6 +25,7 @@ from app.schemas.listing import (
 
 router = APIRouter(prefix="/listings", tags=["listings"], responses=AUTH_ERRORS_FULL)
 
+logger = logging.getLogger("app.database")
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
@@ -50,6 +52,12 @@ async def create_listing(
     current_user.last_active_at = datetime.now(UTC)
     await db.flush()
     await db.refresh(listing)
+    logger.info(
+        "Listing created listing_id=%d author_id=%d title=%r",
+        listing.id,
+        current_user.id,
+        listing.title,
+    )
     return listing_to_out(listing, current_user.full_name)
 
 

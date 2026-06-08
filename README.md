@@ -25,6 +25,7 @@
 | [Documentation/PRODUCTION-SECRETS.md](./Documentation/PRODUCTION-SECRETS.md) | Секреты для `docker-compose.prod.yml` |
 | [Documentation/API.md](./Documentation/API.md) | REST API, Swagger, аутентификация |
 | [Documentation/DEVELOPMENT.md](./Documentation/DEVELOPMENT.md) | Линтеры, CI, качество кода |
+| [Documentation/LOGGING.md](./Documentation/LOGGING.md) | Логирование, ротация, мониторинг БД и auth |
 
 **Интерактивная API-документация:** после запуска бэкенда — [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI), [http://localhost:8000/redoc](http://localhost:8000/redoc) (ReDoc), OpenAPI JSON — [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json).
 
