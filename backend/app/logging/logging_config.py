@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
@@ -27,14 +28,14 @@ class AppTextFormatter(logging.Formatter):
     """Текстовый формат для консоли (Docker stdout) и файла с ротацией."""
 
     def format(self, record: logging.LogRecord) -> str:
-        message = record.getMessage()
         extras = [
             f"{field}={getattr(record, field)}"
             for field in _REQUEST_EXTRA_FIELDS
             if hasattr(record, field)
         ]
         if extras:
-            record.msg = f"{message} | {' | '.join(extras)}"
+            record = copy.copy(record)
+            record.msg = f"{record.getMessage()} | {' | '.join(extras)}"
             record.args = ()
 
         formatted = super().format(record)

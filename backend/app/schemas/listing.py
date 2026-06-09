@@ -10,14 +10,18 @@ from app.models.listing import ListingInterestStatus, ListingStatus
 class ListingCreate(BaseModel):
     """Создание объявления об обмене навыками."""
 
-    title: str = Field(description="Заголовок объявления", examples=["Урок Python за урок английского"])
+    title: str = Field(
+        description="Заголовок объявления", examples=["Урок Python за урок английского"]
+    )
     description: str | None = Field(
         default=None,
         description="Подробное описание",
         examples=["Готов помочь с основами Python 2 раза в неделю."],
     )
     offering_summary: str = Field(description="Что предлагаю", examples=["Основы Python"])
-    seeking_summary: str = Field(description="Что хочу получить", examples=["Разговорный английский"])
+    seeking_summary: str = Field(
+        description="Что хочу получить", examples=["Разговорный английский"]
+    )
     status: ListingStatus = Field(
         default=ListingStatus.published,
         description="Статус: draft, published, archived",
@@ -75,4 +79,6 @@ class ListingInterestDetailOut(ListingInterestOut):
 
 
 def listing_to_out(listing: object, author_full_name: str | None) -> ListingOut:
-    return ListingOut.model_validate(listing).model_copy(update={"author_full_name": author_full_name})
+    return ListingOut.model_validate(listing).model_copy(
+        update={"author_full_name": author_full_name}
+    )

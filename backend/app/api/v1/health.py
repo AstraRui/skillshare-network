@@ -1,4 +1,4 @@
-"""Health-check эндпоинт — проверяет БД и Redis."""
+"""Health-check эндпоинт — проверяет доступность PostgreSQL."""
 
 from __future__ import annotations
 

@@ -32,3 +32,7 @@
 ## Стек (кратко)
 
 Python 3.12 · FastAPI · PostgreSQL 16 · Redis 7 · React · Vite · Docker · GitHub Actions
+
+## Конфигурация репозитория
+
+Файлы `.gitignore`, `.editorconfig`, CI и Docker — в **корне** (требование Git и инструментов). Карта всех конфигов: [config/README.md](./config/README.md).

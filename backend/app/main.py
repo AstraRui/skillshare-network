@@ -35,7 +35,10 @@ OPENAPI_TAGS = [
     {"name": "exchanges", "description": "Сделки (обмены), сообщения и отзывы внутри сделки."},
     {"name": "matches", "description": "Рекомендации пар для обмена (матчмейкинг)."},
     {"name": "chat", "description": "Чат сделки: просмотр, редактирование и удаление сообщений."},
-    {"name": "Admin", "description": "Модерация пользователей, объявлений, сделок и чатов (роль admin)."},
+    {
+        "name": "Admin",
+        "description": "Модерация пользователей, объявлений, сделок и чатов (роль admin).",
+    },
 ]
 
 
@@ -83,9 +86,7 @@ def create_app() -> FastAPI:
             routes=app.routes,
             tags=OPENAPI_TAGS,
         )
-        schema.setdefault("components", {}).setdefault("securitySchemes", {})[
-            "BearerAuth"
-        ] = {
+        schema.setdefault("components", {}).setdefault("securitySchemes", {})["BearerAuth"] = {
             "type": "http",
             "scheme": "bearer",
             "bearerFormat": "JWT",

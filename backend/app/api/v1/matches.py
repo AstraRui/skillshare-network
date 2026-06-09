@@ -17,8 +17,7 @@ router = APIRouter(prefix="/matches", tags=["matches"], responses=AUTH_ERRORS)
     response_model=MatchResponse,
     summary="Рекомендации для обмена",
     description=(
-        "Матчмейкинг по навыкам, рейтингу и активности. "
-        "Параметры пагинации: limit (1–100), offset."
+        "Матчмейкинг по навыкам, рейтингу и активности. Параметры пагинации: limit (1–100), offset."
     ),
 )
 async def get_matches(

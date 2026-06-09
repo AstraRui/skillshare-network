@@ -51,7 +51,9 @@ class TokenResponse(BaseModel):
         description="JWT access token",
         examples=["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."],
     )
-    token_type: str = Field(default="bearer", description="Тип токена (OAuth2 Bearer)", examples=["bearer"])
+    token_type: str = Field(
+        default="bearer", description="Тип токена (OAuth2 Bearer)", examples=["bearer"]
+    )
 
 
 class UserProfile(BaseModel):

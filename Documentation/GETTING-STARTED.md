@@ -45,6 +45,7 @@ flowchart LR
 ```
 skillshare-network/
 ├── README.md                 # Краткое описание и ссылки
+├── config/README.md          # Карта .gitignore, CI, dotfiles (сами файлы — в корне)
 ├── Makefile                  # lint, format, security из корня
 ├── docker-compose.yml        # Dev: postgres, redis, backend, frontend
 ├── docker-compose.prod.yml   # Production stack

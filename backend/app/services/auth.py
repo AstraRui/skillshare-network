@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 import jwt
@@ -30,7 +30,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_access_token(user_id: int, role: str) -> str:
-    payload = {"sub": str(user_id), "role": role, "exp": datetime.utcnow() + timedelta(hours=24)}
+    payload = {"sub": str(user_id), "role": role, "exp": datetime.now(UTC) + timedelta(hours=24)}
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")
 
 
@@ -52,7 +52,9 @@ async def register_user(db: AsyncSession, data: UserRegister) -> User:
     try:
         await db.flush()
     except IntegrityError as exc:
-        logger.error("Registration failed: database integrity error email=%s", data.email, exc_info=True)
+        logger.error(
+            "Registration failed: database integrity error email=%s", data.email, exc_info=True
+        )
         raise HTTPException(status_code=409, detail="Email уже зарегистрирован") from exc
 
     logger.info("User registered user_id=%d email=%s", user.id, data.email)
