@@ -151,3 +151,33 @@ cp .env.example .env
 uv run alembic revision --autogenerate -m "init"
 uv run alembic upgrade head
 ```
+## Backup and Restore
+
+### Create backup
+
+```bash
+bash scripts/backup.sh
+```
+
+The script creates a PostgreSQL database backup in the `backups/` directory.
+
+### Restore backup
+
+```bash
+bash scripts/restore.sh backups/file.sql
+```
+
+The restore script imports a previously created database backup.
+
+### Notes
+
+Generated backup files are ignored by Git and must not be committed to the repository.
+
+Ignored files:
+
+```text
+backups/
+*.sql
+*.tar.gz
+*.zip
+```
