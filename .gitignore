@@ -87,3 +87,9 @@ build/
 .eslintcache
 .prettiercache
 frontend/node_modules/
+
+# Backups
+backups/
+*.sql
+*.tar.gz
+*.zip
