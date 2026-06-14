@@ -15,6 +15,7 @@
 | [Architecture.md](./Architecture.md) | Разработчик | Слои системы, потоки данных, стек |
 | [DEVELOPMENT.md](./DEVELOPMENT.md) | Разработчик | Ruff, ESLint, pre-commit, CI |
 | [LOGGING.md](./LOGGING.md) | DevOps, разработчик | Логирование, ротация, тест сбоев БД |
+| [BACKUP.md](./BACKUP.md) | Администратор | Скрипты backup/restore PostgreSQL и uploads |
 
 ## Интерактивная API-документация
 
