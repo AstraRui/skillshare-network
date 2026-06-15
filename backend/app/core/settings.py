@@ -21,5 +21,12 @@ class Settings(BaseSettings):
     # (есть протокол, домен и т.д.).
     public_base_url: AnyUrl | None = None
 
+    # Логирование (см. app/logging/logging_config.py)
+    log_level: str = "INFO"
+    log_dir: str = "logs"
+    log_file: str = "app.log"
+    log_max_bytes: int = 10 * 1024 * 1024  # 10 МБ
+    log_backup_count: int = 5
+
 
 settings = Settings()

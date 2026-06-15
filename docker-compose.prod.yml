@@ -1,10 +1,11 @@
 # Production compose
 # Запуск: docker compose -f docker-compose.prod.yml up -d
 #
-# Перед запуском создать файлы секретов:
-#   echo "supersecretkey" > secrets/secret_key.txt
-#   echo "strongpassword" > secrets/db_password.txt
-#   chmod 600 secrets/*.txt
+# Перед запуском создать файлы секретов — см. Documentation/PRODUCTION-SECRETS.md
+#   mkdir -p .prod-secrets
+#   openssl rand -hex 32 > .prod-secrets/secret_key.txt
+#   echo "YOUR_STRONG_DB_PASSWORD" > .prod-secrets/db_password.txt
+#   chmod 600 .prod-secrets/*.txt
 
 services:
   db:
@@ -68,6 +69,6 @@ volumes:
 
 secrets:
   secret_key:
-    file: ./secrets/secret_key.txt
+    file: ./.prod-secrets/secret_key.txt
   db_password:
-    file: ./secrets/db_password.txt
+    file: ./.prod-secrets/db_password.txt

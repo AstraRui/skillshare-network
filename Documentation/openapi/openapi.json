@@ -1,0 +1,6694 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SkillShare Network",
+    "description": "REST API платформы SkillShare Network. Большинство эндпоинтов требуют заголовок `Authorization: Bearer <JWT>`. Получите токен через `POST /api/v1/auth/login`.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Healthcheck",
+        "description": "Проверяет доступность API и соединение с PostgreSQL. Аутентификация не требуется.",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Сервис доступен (200 OK)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Api V1 Health Get"
+                },
+                "example": {
+                  "status": "ok",
+                  "db": "ok"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Мой профиль",
+        "description": "Возвращает профиль текущего пользователя. Требуется Bearer JWT.",
+        "operationId": "get_me_api_v1_users_me_get",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Обновить профиль",
+        "description": "Изменяет имя и/или URL аватара. Успех — 200 OK.",
+        "operationId": "update_me_api_v1_users_me_patch",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Удалить аккаунт",
+        "description": "Мягкое удаление: отменяет активные сделки. Успех — 204 No Content.",
+        "operationId": "delete_me_api_v1_users_me_delete",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/skills": {
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Заменить навыки",
+        "description": "Полностью заменяет списки offered/wanted. Неизвестные skill_id — 400.",
+        "operationId": "update_my_skills_api_v1_users_me_skills_put",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSkillsPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Update My Skills Api V1 Users Me Skills Put"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Мои навыки",
+        "description": "Списки предлагаемых и желаемых навыков с названиями из справочника.",
+        "operationId": "get_my_skills_api_v1_users_me_skills_get",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get My Skills Api V1 Users Me Skills Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/password": {
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Сменить пароль",
+        "description": "Успех — 204 No Content. Неверный текущий пароль — 400 Bad Request.",
+        "operationId": "change_password_api_v1_users_me_password_patch",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/reviews": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Мои отзывы",
+        "description": "Отзывы, полученные текущим пользователем (до 20 последних).",
+        "operationId": "get_my_reviews_api_v1_users_me_reviews_get",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReviewOut"
+                  },
+                  "title": "Response Get My Reviews Api V1 Users Me Reviews Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/skills/categories": {
+      "get": {
+        "tags": [
+          "skills"
+        ],
+        "summary": "Категории навыков",
+        "description": "Список всех категорий. Аутентификация не требуется.",
+        "operationId": "get_categories_api_v1_skills_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SkillCategoryOut"
+                  },
+                  "type": "array",
+                  "title": "Response Get Categories Api V1 Skills Categories Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/skills": {
+      "get": {
+        "tags": [
+          "skills"
+        ],
+        "summary": "Список навыков",
+        "description": "Опциональный query-параметр `category_id` для фильтрации.",
+        "operationId": "get_skills_api_v1_skills_get",
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SkillOut"
+                  },
+                  "title": "Response Get Skills Api V1 Skills Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "skills"
+        ],
+        "summary": "Создать навык",
+        "description": "Добавляет навык в справочник. Если категория не указана — используется «Общее».",
+        "operationId": "create_skill_api_v1_skills_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkillCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/listings": {
+      "post": {
+        "tags": [
+          "listings"
+        ],
+        "summary": "Создать объявление",
+        "description": "Публикует новое объявление. Успех — 201 Created.",
+        "operationId": "create_listing_api_v1_listings_post",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "listings"
+        ],
+        "summary": "Список объявлений",
+        "description": "Публичный каталог. Фильтры: status, author_id. JWT не обязателен.",
+        "operationId": "get_listings_api_v1_listings_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ListingStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "published",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "author_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Author Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListingOut"
+                  },
+                  "title": "Response Get Listings Api V1 Listings Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/listings/me/incoming-interests": {
+      "get": {
+        "tags": [
+          "listings"
+        ],
+        "summary": "Входящие отклики",
+        "description": "Отклики на мои объявления со статусом pending.",
+        "operationId": "get_my_incoming_interests_api_v1_listings_me_incoming_interests_get",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListingInterestDetailOut"
+                  },
+                  "title": "Response Get My Incoming Interests Api V1 Listings Me Incoming Interests Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/listings/{listing_id}": {
+      "patch": {
+        "tags": [
+          "listings"
+        ],
+        "summary": "Обновить объявление",
+        "description": "Редактирование только автором. Не найдено — 404, не автор — 403.",
+        "operationId": "update_listing_api_v1_listings__listing_id__patch",
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Listing Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/listings/{listing_id}/interests": {
+      "get": {
+        "tags": [
+          "listings"
+        ],
+        "summary": "Отклики на объявление",
+        "description": "Список pending-откликов. Доступно только автору объявления.",
+        "operationId": "get_listing_interests_api_v1_listings__listing_id__interests_get",
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Listing Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListingInterestDetailOut"
+                  },
+                  "title": "Response Get Listing Interests Api V1 Listings  Listing Id  Interests Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "listings"
+        ],
+        "summary": "Откликнуться на объявление",
+        "description": "Создаёт отклик. Успех — 201. Свой listing — 400, дубликат — 409.",
+        "operationId": "create_listing_interest_api_v1_listings__listing_id__interests_post",
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Listing Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingInterestCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingInterestOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exchanges/listing/{listing_id}/accept-interest": {
+      "post": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Принять отклик",
+        "description": "Автор объявления принимает отклик и создаёт сделку + чат. 404 — listing/interest не найден.",
+        "operationId": "accept_listing_interest_api_v1_exchanges_listing__listing_id__accept_interest_post",
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Listing Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInterestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exchanges/direct": {
+      "post": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Прямой обмен",
+        "description": "Создание сделки без объявления при взаимном совпадении навыков.",
+        "operationId": "create_direct_exchange_api_v1_exchanges_direct_post",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DirectExchangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exchanges": {
+      "get": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Мои сделки",
+        "description": "Все обмены, где текущий пользователь — участник.",
+        "operationId": "get_my_exchanges_api_v1_exchanges_get",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExchangeOut"
+                  },
+                  "title": "Response Get My Exchanges Api V1 Exchanges Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exchanges/{exchange_id}/status": {
+      "post": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Сменить статус сделки",
+        "description": "Переход discussion → active → completed / cancelled.",
+        "operationId": "update_exchange_status_api_v1_exchanges__exchange_id__status_post",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExchangeStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exchanges/{exchange_id}/request-start": {
+      "post": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Запросить старт обмена",
+        "description": "Один участник запрашивает переход в active; требуется подтверждение партнёра.",
+        "operationId": "request_start_exchange_api_v1_exchanges__exchange_id__request_start_post",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exchanges/{exchange_id}/confirm-completion": {
+      "post": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Подтвердить завершение",
+        "description": "Оба участника подтверждают завершение — сделка переходит в completed.",
+        "operationId": "confirm_exchange_completion_api_v1_exchanges__exchange_id__confirm_completion_post",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exchanges/{exchange_id}/messages": {
+      "get": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Сообщения сделки",
+        "description": "История переписки внутри обмена. Только участники — иначе 403.",
+        "operationId": "get_exchange_messages_api_v1_exchanges__exchange_id__messages_get",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageOut"
+                  },
+                  "title": "Response Get Exchange Messages Api V1 Exchanges  Exchange Id  Messages Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Отправить сообщение",
+        "description": "Новое сообщение в чате сделки. Успех — 201. Завершённая сделка — 400 (read-only).",
+        "operationId": "post_exchange_message_api_v1_exchanges__exchange_id__messages_post",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exchanges/{exchange_id}/reviews": {
+      "get": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Отзывы по сделке",
+        "description": "Отзывы участников после завершения обмена.",
+        "operationId": "get_exchange_reviews_api_v1_exchanges__exchange_id__reviews_get",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReviewOut"
+                  },
+                  "title": "Response Get Exchange Reviews Api V1 Exchanges  Exchange Id  Reviews Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "exchanges"
+        ],
+        "summary": "Оставить отзыв",
+        "description": "Оценка партнёра (1–5) после completed. Успех — 201 Created.",
+        "operationId": "create_exchange_review_api_v1_exchanges__exchange_id__reviews_post",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Доступ запрещён (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Only exchange members have access"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/matches": {
+      "get": {
+        "tags": [
+          "matches"
+        ],
+        "summary": "Рекомендации для обмена",
+        "description": "Матчмейкинг по навыкам, рейтингу и активности. Параметры пагинации: limit (1–100), offset.",
+        "operationId": "get_matches_api_v1_matches_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Максимум результатов",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Максимум результатов"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Смещение для пагинации",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Смещение для пагинации"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/exchanges/{exchange_id}": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Чат сделки",
+        "description": "Метаданные чата по ID сделки (exchange). Не найден — 404.",
+        "operationId": "get_chat_api_v1_chat_exchanges__exchange_id__get",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/exchanges/{exchange_id}/messages": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Сообщения чата",
+        "description": "История сообщений сделки (включая архивные после завершения).",
+        "operationId": "list_messages_api_v1_chat_exchanges__exchange_id__messages_get",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageRead"
+                  },
+                  "title": "Response List Messages Api V1 Chat Exchanges  Exchange Id  Messages Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/exchanges/{exchange_id}/messages/{message_id}": {
+      "patch": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Редактировать сообщение",
+        "description": "Изменяет текст сообщения. Чат или сообщение не найдены — 404.",
+        "operationId": "edit_message_api_v1_chat_exchanges__exchange_id__messages__message_id__patch",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Message Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Удалить сообщение",
+        "description": "Мягкое удаление сообщения. Возвращает обновлённую запись.",
+        "operationId": "delete_message_api_v1_chat_exchanges__exchange_id__messages__message_id__delete",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Message Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Список пользователей",
+        "description": "Модерация: все пользователи с пагинацией. Требуется роль admin.",
+        "operationId": "get_admin_users_api_v1_admin_users_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminUserOut"
+                  },
+                  "title": "Response Get Admin Users Api V1 Admin Users Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Пользователь по ID",
+        "description": "Карточка пользователя. Не найден — 404.",
+        "operationId": "get_admin_user_api_v1_admin_users__user_id__get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Заблокировать пользователя",
+        "description": "Мягкая блокировка (is_deleted). Успех — 204 No Content.",
+        "operationId": "block_admin_user_api_v1_admin_users__user_id__delete",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/status": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Изменить статус пользователя",
+        "description": "Блокировка, разблокировка, пометка fraudulent.",
+        "operationId": "patch_admin_user_status_api_v1_admin_users__user_id__status_patch",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserStatusPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/listings": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Список объявлений",
+        "description": "Все объявления для модерации.",
+        "operationId": "get_admin_listings_api_v1_admin_listings_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminListingOut"
+                  },
+                  "title": "Response Get Admin Listings Api V1 Admin Listings Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/listings/{listing_id}/status": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Статус объявления",
+        "description": "Скрытие, публикация, архивация объявления.",
+        "operationId": "patch_admin_listing_status_api_v1_admin_listings__listing_id__status_patch",
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Listing Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingStatusPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminListingOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/listings/{listing_id}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Удалить объявление",
+        "description": "Мягкое удаление объявления. Успех — 204.",
+        "operationId": "delete_admin_listing_api_v1_admin_listings__listing_id__delete",
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Listing Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/exchanges": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Список сделок",
+        "description": "Все обмены с опциональным фильтром по статусу.",
+        "operationId": "get_admin_exchanges_api_v1_admin_exchanges_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ExchangeStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminExchangeOut"
+                  },
+                  "title": "Response Get Admin Exchanges Api V1 Admin Exchanges Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/exchanges/{exchange_id}/status": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Статус сделки",
+        "description": "Принудительная смена статуса обмена модератором.",
+        "operationId": "patch_admin_exchange_status_api_v1_admin_exchanges__exchange_id__status_patch",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExchangeStatusPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminExchangeOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/exchanges/{exchange_id}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Отменить сделку",
+        "description": "Отмена обмена администратором. Успех — 204.",
+        "operationId": "delete_admin_exchange_api_v1_admin_exchanges__exchange_id__delete",
+        "parameters": [
+          {
+            "name": "exchange_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Exchange Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/chats": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Список чатов",
+        "description": "Все чаты сделок для модерации.",
+        "operationId": "get_admin_chats_api_v1_admin_chats_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminChatOut"
+                  },
+                  "title": "Response Get Admin Chats Api V1 Admin Chats Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/chats/{chat_id}/messages": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Сообщения чата",
+        "description": "История сообщений чата для просмотра модератором.",
+        "operationId": "get_admin_chat_messages_api_v1_admin_chats__chat_id__messages_get",
+        "parameters": [
+          {
+            "name": "chat_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Chat Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminMessageOut"
+                  },
+                  "title": "Response Get Admin Chat Messages Api V1 Admin Chats  Chat Id  Messages Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/chats/{chat_id}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Закрыть чат",
+        "description": "Закрытие чата модератором. Успех — 204.",
+        "operationId": "delete_admin_chat_api_v1_admin_chats__chat_id__delete",
+        "parameters": [
+          {
+            "name": "chat_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Chat Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reports": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Жалобы (заглушка)",
+        "description": "Endpoint-заглушка для будущих жалоб. Возвращает пустой список.",
+        "operationId": "get_admin_reports_api_v1_admin_reports_get",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminReportOut"
+                  },
+                  "title": "Response Get Admin Reports Api V1 Admin Reports Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ресурс не найден (404 Not Found)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Объявление не найдено"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Требуется роль admin (403 Forbidden)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Admin access required"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Регистрация пользователя",
+        "description": "Создаёт нового пользователя. Пароль — минимум 10 символов.",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт данных (409 Conflict)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пользователь с таким email уже зарегистрирован"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Вход в систему",
+        "description": "Проверяет email и пароль, возвращает JWT access_token для заголовка Authorization.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (400 Bad Request)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Неверный текущий пароль"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации (422 Unprocessable Entity)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Пароль должен содержать минимум 10 символов"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован (401 Unauthorized)",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Missing or invalid Authorization header"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AcceptInterestRequest": {
+        "properties": {
+          "responder_id": {
+            "type": "integer",
+            "title": "Responder Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "responder_id"
+        ],
+        "title": "AcceptInterestRequest"
+      },
+      "AdminChatOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "exchange_id": {
+            "type": "integer",
+            "title": "Exchange Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChatStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "exchange_id",
+          "status",
+          "created_at"
+        ],
+        "title": "AdminChatOut"
+      },
+      "AdminExchangeOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "initiator_id": {
+            "type": "integer",
+            "title": "Initiator Id"
+          },
+          "initiator_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initiator Name"
+          },
+          "partner_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Id"
+          },
+          "partner_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Name"
+          },
+          "listing_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExchangeStatus"
+          },
+          "is_chain": {
+            "type": "boolean",
+            "title": "Is Chain"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "completed_by_initiator": {
+            "type": "boolean",
+            "title": "Completed By Initiator"
+          },
+          "completed_by_partner": {
+            "type": "boolean",
+            "title": "Completed By Partner"
+          },
+          "is_deleted": {
+            "type": "boolean",
+            "title": "Is Deleted"
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "initiator_id",
+          "listing_id",
+          "status",
+          "is_chain",
+          "created_at",
+          "completed_at",
+          "completed_by_initiator",
+          "completed_by_partner",
+          "is_deleted",
+          "deleted_at"
+        ],
+        "title": "AdminExchangeOut"
+      },
+      "AdminListingOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "author_id": {
+            "type": "integer",
+            "title": "Author Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "offering_summary": {
+            "type": "string",
+            "title": "Offering Summary"
+          },
+          "seeking_summary": {
+            "type": "string",
+            "title": "Seeking Summary"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListingStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "author_id",
+          "title",
+          "description",
+          "offering_summary",
+          "seeking_summary",
+          "status",
+          "created_at"
+        ],
+        "title": "AdminListingOut"
+      },
+      "AdminMessageOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "chat_id": {
+            "type": "integer",
+            "title": "Chat Id"
+          },
+          "sender_id": {
+            "type": "integer",
+            "title": "Sender Id"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "media_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Url"
+          },
+          "media_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Type"
+          },
+          "media_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Size"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At"
+          },
+          "is_deleted": {
+            "type": "boolean",
+            "title": "Is Deleted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "chat_id",
+          "sender_id",
+          "content",
+          "media_url",
+          "media_type",
+          "media_size",
+          "created_at",
+          "edited_at",
+          "is_deleted"
+        ],
+        "title": "AdminMessageOut"
+      },
+      "AdminReportOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "message"
+        ],
+        "title": "AdminReportOut"
+      },
+      "AdminUserOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "rating": {
+            "type": "number",
+            "title": "Rating"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "is_deleted": {
+            "type": "boolean",
+            "title": "Is Deleted"
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "phone",
+          "full_name",
+          "rating",
+          "role",
+          "is_deleted",
+          "deleted_at",
+          "created_at"
+        ],
+        "title": "AdminUserOut"
+      },
+      "ChatRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "exchange_id": {
+            "type": "integer",
+            "title": "Exchange Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChatStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "exchange_id",
+          "status",
+          "created_at"
+        ],
+        "title": "ChatRead"
+      },
+      "ChatStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "closed"
+        ],
+        "title": "ChatStatus"
+      },
+      "DirectExchangeRequest": {
+        "properties": {
+          "target_user_id": {
+            "type": "integer",
+            "title": "Target User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_user_id"
+        ],
+        "title": "DirectExchangeRequest"
+      },
+      "ExchangeOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "initiator_id": {
+            "type": "integer",
+            "title": "Initiator Id"
+          },
+          "partner_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Id"
+          },
+          "partner_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Name"
+          },
+          "listing_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing Id"
+          },
+          "listing_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing Title"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExchangeStatus"
+          },
+          "is_chain": {
+            "type": "boolean",
+            "title": "Is Chain"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "completed_by_initiator": {
+            "type": "boolean",
+            "title": "Completed By Initiator"
+          },
+          "completed_by_partner": {
+            "type": "boolean",
+            "title": "Completed By Partner"
+          },
+          "started_by_initiator": {
+            "type": "boolean",
+            "title": "Started By Initiator"
+          },
+          "started_by_partner": {
+            "type": "boolean",
+            "title": "Started By Partner"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "initiator_id",
+          "status",
+          "is_chain",
+          "created_at",
+          "completed_at",
+          "completed_by_initiator",
+          "completed_by_partner",
+          "started_by_initiator",
+          "started_by_partner",
+          "started_at"
+        ],
+        "title": "ExchangeOut"
+      },
+      "ExchangeStatus": {
+        "type": "string",
+        "enum": [
+          "discussion",
+          "active",
+          "completed",
+          "cancelled"
+        ],
+        "title": "ExchangeStatus",
+        "description": "Жизненный цикл сделки (ТЗ): обсуждение → активный обмен → завершение / отмена."
+      },
+      "ExchangeStatusPatch": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ExchangeStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ExchangeStatusPatch"
+      },
+      "ExchangeStatusUpdate": {
+        "properties": {
+          "to": {
+            "$ref": "#/components/schemas/ExchangeStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "to"
+        ],
+        "title": "ExchangeStatusUpdate"
+      },
+      "ListingCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Заголовок объявления",
+            "examples": [
+              "Урок Python за урок английского"
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Подробное описание",
+            "examples": [
+              "Готов помочь с основами Python 2 раза в неделю."
+            ]
+          },
+          "offering_summary": {
+            "type": "string",
+            "title": "Offering Summary",
+            "description": "Что предлагаю",
+            "examples": [
+              "Основы Python"
+            ]
+          },
+          "seeking_summary": {
+            "type": "string",
+            "title": "Seeking Summary",
+            "description": "Что хочу получить",
+            "examples": [
+              "Разговорный английский"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListingStatus",
+            "description": "Статус: draft, published, archived",
+            "default": "published"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "offering_summary",
+          "seeking_summary"
+        ],
+        "title": "ListingCreate",
+        "description": "Создание объявления об обмене навыками."
+      },
+      "ListingInterestCreate": {
+        "properties": {
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Сопроводительное сообщение автору",
+            "examples": [
+              "Интересен обмен, могу заниматься по вечерам."
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ListingInterestCreate",
+        "description": "Отклик на объявление."
+      },
+      "ListingInterestDetailOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "listing_id": {
+            "type": "integer",
+            "title": "Listing Id"
+          },
+          "responder_id": {
+            "type": "integer",
+            "title": "Responder Id"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListingInterestStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "listing_title": {
+            "type": "string",
+            "title": "Listing Title"
+          },
+          "responder_full_name": {
+            "type": "string",
+            "title": "Responder Full Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "listing_id",
+          "responder_id",
+          "message",
+          "status",
+          "created_at",
+          "listing_title",
+          "responder_full_name"
+        ],
+        "title": "ListingInterestDetailOut"
+      },
+      "ListingInterestOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "listing_id": {
+            "type": "integer",
+            "title": "Listing Id"
+          },
+          "responder_id": {
+            "type": "integer",
+            "title": "Responder Id"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListingInterestStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "listing_id",
+          "responder_id",
+          "message",
+          "status",
+          "created_at"
+        ],
+        "title": "ListingInterestOut"
+      },
+      "ListingInterestStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "withdrawn",
+          "accepted",
+          "rejected"
+        ],
+        "title": "ListingInterestStatus"
+      },
+      "ListingOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "author_id": {
+            "type": "integer",
+            "title": "Author Id"
+          },
+          "author_full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Full Name"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "offering_summary": {
+            "type": "string",
+            "title": "Offering Summary"
+          },
+          "seeking_summary": {
+            "type": "string",
+            "title": "Seeking Summary"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListingStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "author_id",
+          "title",
+          "description",
+          "offering_summary",
+          "seeking_summary",
+          "status",
+          "created_at"
+        ],
+        "title": "ListingOut"
+      },
+      "ListingStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "published",
+          "archived"
+        ],
+        "title": "ListingStatus"
+      },
+      "ListingStatusPatch": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ListingStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ListingStatusPatch"
+      },
+      "ListingUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "offering_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offering Summary"
+          },
+          "seeking_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seeking Summary"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ListingStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ListingUpdate",
+        "description": "Частичное обновление объявления (только автор)."
+      },
+      "MatchResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MatchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "total"
+        ],
+        "title": "MatchResponse"
+      },
+      "MatchResult": {
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "score": {
+            "$ref": "#/components/schemas/ScoreBreakdown"
+          },
+          "skills_i_get": {
+            "items": {
+              "$ref": "#/components/schemas/SkillMatch"
+            },
+            "type": "array",
+            "title": "Skills I Get"
+          },
+          "skills_i_give": {
+            "items": {
+              "$ref": "#/components/schemas/SkillMatch"
+            },
+            "type": "array",
+            "title": "Skills I Give"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "score",
+          "skills_i_get",
+          "skills_i_give"
+        ],
+        "title": "MatchResult"
+      },
+      "MessageCreate": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "MessageCreate"
+      },
+      "MessageOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "chat_id": {
+            "type": "integer",
+            "title": "Chat Id"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          },
+          "sender_id": {
+            "type": "integer",
+            "title": "Sender Id"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "chat_id",
+          "task_id",
+          "sender_id",
+          "content",
+          "created_at"
+        ],
+        "title": "MessageOut"
+      },
+      "MessageRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "chat_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chat Id"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          },
+          "sender_id": {
+            "type": "integer",
+            "title": "Sender Id"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "media_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "is_deleted": {
+            "type": "boolean",
+            "title": "Is Deleted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "chat_id",
+          "task_id",
+          "sender_id",
+          "content",
+          "media_url",
+          "created_at",
+          "is_deleted"
+        ],
+        "title": "MessageRead"
+      },
+      "MessageUpdate": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "MessageUpdate"
+      },
+      "PasswordChangeRequest": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "title": "Current Password",
+            "description": "Текущий пароль"
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 10,
+            "title": "New Password",
+            "description": "Новый пароль (минимум 10 символов)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChangeRequest"
+      },
+      "ReviewCreate": {
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "title": "Rating"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rating"
+        ],
+        "title": "ReviewCreate"
+      },
+      "ReviewOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "exchange_id": {
+            "type": "integer",
+            "title": "Exchange Id"
+          },
+          "reviewer_id": {
+            "type": "integer",
+            "title": "Reviewer Id"
+          },
+          "reviewer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Name"
+          },
+          "reviewed_id": {
+            "type": "integer",
+            "title": "Reviewed Id"
+          },
+          "rating": {
+            "type": "integer",
+            "title": "Rating"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "exchange_id",
+          "reviewer_id",
+          "reviewed_id",
+          "rating",
+          "comment"
+        ],
+        "title": "ReviewOut"
+      },
+      "ScoreBreakdown": {
+        "properties": {
+          "s_skills": {
+            "type": "number",
+            "title": "S Skills"
+          },
+          "s_level": {
+            "type": "number",
+            "title": "S Level"
+          },
+          "s_activity": {
+            "type": "number",
+            "title": "S Activity"
+          },
+          "s_reputation": {
+            "type": "number",
+            "title": "S Reputation"
+          },
+          "core_score": {
+            "type": "number",
+            "title": "Core Score"
+          },
+          "final_score": {
+            "type": "number",
+            "title": "Final Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "s_skills",
+          "s_level",
+          "s_activity",
+          "s_reputation",
+          "core_score",
+          "final_score"
+        ],
+        "title": "ScoreBreakdown"
+      },
+      "SkillCategoryOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "parent_id"
+        ],
+        "title": "SkillCategoryOut"
+      },
+      "SkillCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "SkillCreate"
+      },
+      "SkillMatch": {
+        "properties": {
+          "skill_id": {
+            "type": "integer",
+            "title": "Skill Id"
+          },
+          "skill_name": {
+            "type": "string",
+            "title": "Skill Name"
+          },
+          "offered_level": {
+            "type": "integer",
+            "title": "Offered Level"
+          },
+          "desired_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desired Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "skill_id",
+          "skill_name",
+          "offered_level"
+        ],
+        "title": "SkillMatch"
+      },
+      "SkillOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category_id": {
+            "type": "integer",
+            "title": "Category Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category_id",
+          "description"
+        ],
+        "title": "SkillOut"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "JWT access token",
+            "examples": [
+              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            ]
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "description": "Тип токена (OAuth2 Bearer)",
+            "default": "bearer",
+            "examples": [
+              "bearer"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token"
+        ],
+        "title": "TokenResponse",
+        "description": "JWT-токен для заголовка Authorization: Bearer ..."
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "Email",
+            "examples": [
+              "user@example.com"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "description": "Пароль",
+            "examples": [
+              "SecurePass123"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin",
+        "description": "Тело запроса входа."
+      },
+      "UserProfile": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "rating": {
+            "type": "number",
+            "title": "Rating",
+            "description": "Средний рейтинг по отзывам",
+            "examples": [
+              4.5
+            ]
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "avatar_url",
+          "rating",
+          "role"
+        ],
+        "title": "UserProfile",
+        "description": "Полный профиль текущего пользователя."
+      },
+      "UserRegister": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "Email пользователя",
+            "examples": [
+              "user@example.com"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Password",
+            "description": "Пароль (минимум 10 символов)",
+            "examples": [
+              "SecurePass123"
+            ]
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name",
+            "description": "Отображаемое имя",
+            "examples": [
+              "Иван Иванов"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserRegister",
+        "description": "Тело запроса регистрации."
+      },
+      "UserResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "ID пользователя",
+            "examples": [
+              1
+            ]
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "examples": [
+              "user@example.com"
+            ]
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name",
+            "examples": [
+              "Иван Иванов"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Роль: user или admin",
+            "examples": [
+              "user"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role"
+        ],
+        "title": "UserResponse",
+        "description": "Ответ после регистрации."
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "user",
+          "admin"
+        ],
+        "title": "UserRole"
+      },
+      "UserSkillOffered": {
+        "properties": {
+          "skill_id": {
+            "type": "integer",
+            "title": "Skill Id",
+            "description": "ID навыка из справочника",
+            "examples": [
+              1
+            ]
+          },
+          "level": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Level",
+            "description": "Уровень владения 1–3",
+            "examples": [
+              2
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "skill_id",
+          "level"
+        ],
+        "title": "UserSkillOffered"
+      },
+      "UserSkillWanted": {
+        "properties": {
+          "skill_id": {
+            "type": "integer",
+            "title": "Skill Id",
+            "description": "ID желаемого навыка",
+            "examples": [
+              2
+            ]
+          },
+          "desired_level": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Desired Level",
+            "description": "Желаемый уровень 1–3",
+            "examples": [
+              1
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "skill_id",
+          "desired_level"
+        ],
+        "title": "UserSkillWanted"
+      },
+      "UserSkillsPayload": {
+        "properties": {
+          "offered": {
+            "items": {
+              "$ref": "#/components/schemas/UserSkillOffered"
+            },
+            "type": "array",
+            "title": "Offered",
+            "description": "Чему могу научить"
+          },
+          "wanted": {
+            "items": {
+              "$ref": "#/components/schemas/UserSkillWanted"
+            },
+            "type": "array",
+            "title": "Wanted",
+            "description": "Чему хочу научиться"
+          }
+        },
+        "type": "object",
+        "title": "UserSkillsPayload",
+        "description": "Полная замена навыков пользователя."
+      },
+      "UserStatusPatch": {
+        "properties": {
+          "is_deleted": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Deleted"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRole"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "UserStatusPatch"
+      },
+      "UserUpdate": {
+        "properties": {
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name",
+            "examples": [
+              "Новое имя"
+            ]
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url",
+            "examples": [
+              "https://cdn.example.com/avatar.png"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "UserUpdate",
+        "description": "Поля которые пользователь может изменить сам."
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT из ответа POST /api/v1/auth/login"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "health",
+      "description": "Проверка доступности API и подключения к БД."
+    },
+    {
+      "name": "Auth",
+      "description": "Регистрация и вход. Возвращает JWT access_token."
+    },
+    {
+      "name": "users",
+      "description": "Профиль текущего пользователя, навыки, пароль, отзывы."
+    },
+    {
+      "name": "skills",
+      "description": "Справочник категорий и навыков."
+    },
+    {
+      "name": "listings",
+      "description": "Объявления об обмене навыками и отклики."
+    },
+    {
+      "name": "exchanges",
+      "description": "Сделки (обмены), сообщения и отзывы внутри сделки."
+    },
+    {
+      "name": "matches",
+      "description": "Рекомендации пар для обмена (матчмейкинг)."
+    },
+    {
+      "name": "chat",
+      "description": "Чат сделки: просмотр, редактирование и удаление сообщений."
+    },
+    {
+      "name": "Admin",
+      "description": "Модерация пользователей, объявлений, сделок и чатов (роль admin)."
+    }
+  ]
+}

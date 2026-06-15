@@ -1,153 +1,39 @@
-## SkillShare Network
+# SkillShare Network
 
-Платформа для обмена навыками, где пользователи публикуют свои предложения (что они умеют и чему могут обучить) и указывают, что хотят получить взамен. Другие пользователи могут откликаться на эти предложения, и при взаимном интересе система создаёт сделку между двумя людьми.
+Платформа взаимного обмена навыками: объявления, отклики, сделки, встроенный чат, отзывы и матчмейкинг.
 
-Каждая сделка проходит через статусы: обсуждение, активный обмен и завершение. После создания сделки автоматически открывается чат внутри неё, через который участники договариваются и ведут сам обмен. В активной сделке переписка доступна только между участниками этой сделки, и она существует только в рамках её жизненного цикла.
+## Быстрый старт
 
-После завершения сделки оба пользователя подтверждают результат и оценивают друг друга, формируя рейтинг доверия.
-
-Отдельно есть вкладка “чаты”: там отображаются все текущие и завершённые сделки. Однако писать можно только в активных сделках — завершённые чаты остаются в виде архива истории и доступны только для просмотра, без возможности продолжить переписку.
-
-Дополнительно система использует матчмейкинг, который анализирует навыки, запросы и историю обменов, чтобы предлагать наиболее подходящих людей для потенциального обмена с высокой вероятностью совпадения интересов.
-
-## Технологический стек
-
-| Слой | Технология | Почему |
+| Способ | Команда | URL |
 | --- | --- | --- |
-| Backend | Python 3.12 + FastAPI | Максимальная скорость, асинхронность, мощная типизация (Pydantic) |
-| Backend lint / format | Ruff | Заменяет Flake8, Black и Isort |
-| Frontend lint / format | ESLint + Prettier | Проверка React-кода и единый стиль |
-| Frontend | React + Vite | Современный компонентный подход, быстрая разработка |
-| UI-компоненты | TailwindCSS | Профессиональный UI с минимальными стилями |
-| ORM | SQLAlchemy 2.0 + Alembic | Работа со сложным SQL и рекурсиями для матчинга цепочек |
-| База данных | PostgreSQL 16+ | Реляционная классика, идеальна для графовых запросов (CTE) |
-| Real-time | WebSockets | Real-time чат через `/api/v1/chat/{id}/ws` |
-| Auth | JWT + X-User-Id header | MVP-аутентификация через заголовки (см. `app/api/deps.py`) |
-| Ops | Docker + GitHub Actions | Стандарт индустрии для контейнеризации и автоматизации |
+| Backend (локально) | `cd backend && uv sync && uv run uvicorn app.main:app --reload` | http://localhost:8000/docs |
+| Frontend (локально) | `cd frontend && npm ci && npm run dev` | http://localhost:5173 |
+| Docker (полный стек) | `docker compose --profile full up --build` | http://localhost:5173 |
 
-## Архитектурный план (следующий спринт)
+Перед первым запуском: скопируйте `backend/.env.example` → `backend/.env`, поднимите PostgreSQL (или используйте Docker).
 
-Каркас бэкенда подготовлен для расширения:
+## Документация
 
-| Фича | Статус | Файл |
-| --- | --- | --- |
-| WebSocket чат | ✅ Работает | `app/ws/manager.py`, `app/api/v1/chat.py` |
-| Правила переписки | ✅ Готов | `app/policies/exchange_messaging.py` |
-| Redis кэш | 🔄 Планируется | - |
-| Рекурсивные CTE для графов | 🔄 Планируется | SQLAlchemy 2.0 поддерживает CTE |
-| Chain matching | 🔄 Планируется | Поиск цепочек обмена A→B→C |
+Вся подробная информация — в каталоге **[Documentation/](./Documentation/)**:
 
-## Структура репозитория
+| Документ | Содержание |
+| --- | --- |
+| [Documentation/README.md](./Documentation/README.md) | Навигация по документации |
+| [Documentation/GETTING-STARTED.md](./Documentation/GETTING-STARTED.md) | Архитектура, структура репозитория, локальный запуск, матрица `.env` |
+| [Documentation/DEPLOYMENT.md](./Documentation/DEPLOYMENT.md) | Production: сервер, Nginx, восстановление после сбоев |
+| [Documentation/ENV.md](./Documentation/ENV.md) | Переменные окружения (с демо-значениями) |
+| [Documentation/PRODUCTION-SECRETS.md](./Documentation/PRODUCTION-SECRETS.md) | Секреты для `docker-compose.prod.yml` |
+| [Documentation/API.md](./Documentation/API.md) | REST API, Swagger, аутентификация |
+| [Documentation/DEVELOPMENT.md](./Documentation/DEVELOPMENT.md) | Линтеры, CI, качество кода |
+| [Documentation/LOGGING.md](./Documentation/LOGGING.md) | Логирование, ротация, мониторинг БД и auth |
+| [Documentation/BACKUP.md](./Documentation/BACKUP.md) | Бэкап и восстановление БД + медиа |
 
-- `backend/`: FastAPI-приложение, DB слой и миграции Alembic
-- `frontend/`: React-приложение (Vite + TailwindCSS)
-  - `frontend/src/`: страницы, компоненты, API-клиент
-  - `frontend/src/admin/`: UI админ-панели (React)
-- `Documentation/`: описание, архитектура, диаграммы, инструкции по секретам
-- `secrets/`: локальные файлы для Docker prod (не в git)
-- `docker-compose.yml`: PostgreSQL + backend
+**Интерактивная API-документация:** после запуска бэкенда — [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI), [http://localhost:8000/redoc](http://localhost:8000/redoc) (ReDoc), OpenAPI JSON — [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json).
 
-## Быстрый старт (локально)
+## Стек (кратко)
 
-Требования: Python 3.12+, [`uv`](https://astral.sh/uv/)
+Python 3.12 · FastAPI · PostgreSQL 16 · Redis 7 · React · Vite · Docker · GitHub Actions
 
-```bash
-cd backend
-uv sync
-uv run uvicorn app.main:app --reload
-```
+## Конфигурация репозитория
 
-Открыть:
-- `http://localhost:8000/` (SSR страница)
-- `http://localhost:8000/api/health` (healthcheck)
-
-### Проверка и форматирование кода
-
-Установка инструментов (один раз):
-
-```bash
-make install-tools
-```
-
-Проверка стиля (как на CI):
-
-```bash
-make lint
-```
-
-Автоформатирование:
-
-```bash
-make format
-```
-
-Исправление lint с автофиксом:
-
-```bash
-make lint-fix
-```
-
-Аудит уязвимостей Python-зависимостей:
-
-```bash
-make audit-deps
-```
-
-| Слой | Линтер | Форматтер |
-| --- | --- | --- |
-| Backend (Python 3.12) | [Ruff](https://docs.astral.sh/ruff/) (`ruff check`) | Ruff (`ruff format`) |
-| Frontend (React + Vite) | [ESLint](https://eslint.org/) (`npm run lint`) | [Prettier](https://prettier.io/) (`npm run format`) |
-
-Отдельно по каталогам:
-
-```bash
-# Backend
-cd backend
-uv run ruff check .
-uv run ruff format .
-
-# Frontend
-cd frontend
-npm run lint
-npm run format:check   # только проверка
-npm run format         # записать исправления
-```
-
-Опционально — хуки перед коммитом ([pre-commit](https://pre-commit.com/)):
-
-```bash
-pip install pre-commit   # или: uv tool install pre-commit
-pre-commit install
-pre-commit run --all-files
-```
-
-## Запуск через Docker
-
-### Полный стек (backend + frontend + postgres)
-
-```bash
-docker compose --profile full up --build
-```
-
-### Только backend + postgres (без frontend)
-
-```bash
-docker compose up --build
-```
-
-### Остановка
-
-```bash
-docker compose --profile full down
-```
-
-## Миграции (Alembic)
-
-Перед миграциями убедитесь, что поднят Postgres и корректен `SSN_DATABASE_URL`.
-
-```bash
-cd backend
-cp .env.example .env
-uv run alembic revision --autogenerate -m "init"
-uv run alembic upgrade head
-```
+Файлы `.gitignore`, `.editorconfig`, CI и Docker — в **корне** (требование Git и инструментов). Карта всех конфигов: [config/README.md](./config/README.md).

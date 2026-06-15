@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_session
+from app.api.openapi_responses import AUTH_ERRORS_FULL
 from app.models.review import Review
 from app.models.skill import Skill, UserSkillsOffered, UserSkillsWanted
 from app.models.user import User
@@ -16,19 +17,29 @@ from app.schemas.user import PasswordChangeRequest, UserProfile, UserSkillsPaylo
 from app.services.auth import hash_password, verify_password
 from app.services.user import cancel_user_exchanges
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"], responses=AUTH_ERRORS_FULL)
 
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-@router.get("/me", response_model=UserProfile)
+@router.get(
+    "/me",
+    response_model=UserProfile,
+    summary="Мой профиль",
+    description="Возвращает профиль текущего пользователя. Требуется Bearer JWT.",
+)
 async def get_me(current_user: CurrentUser) -> User:
     """Возвращает профиль текущего авторизованного пользователя."""
     return current_user
 
 
-@router.patch("/me", response_model=UserProfile)
+@router.patch(
+    "/me",
+    response_model=UserProfile,
+    summary="Обновить профиль",
+    description="Изменяет имя и/или URL аватара. Успех — 200 OK.",
+)
 async def update_me(
     payload: UserUpdate,
     db: DbSession,
@@ -44,7 +55,11 @@ async def update_me(
     return current_user
 
 
-@router.put("/me/skills")
+@router.put(
+    "/me/skills",
+    summary="Заменить навыки",
+    description="Полностью заменяет списки offered/wanted. Неизвестные skill_id — 400.",
+)
 async def update_my_skills(
     payload: UserSkillsPayload,
     db: DbSession,
@@ -100,7 +115,12 @@ async def update_my_skills(
     return {"ok": True}
 
 
-@router.patch("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch(
+    "/me/password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Сменить пароль",
+    description="Успех — 204 No Content. Неверный текущий пароль — 400 Bad Request.",
+)
 async def change_password(
     payload: PasswordChangeRequest,
     db: DbSession,
@@ -113,7 +133,12 @@ async def change_password(
     await db.flush()
 
 
-@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удалить аккаунт",
+    description="Мягкое удаление: отменяет активные сделки. Успех — 204 No Content.",
+)
 async def delete_me(
     db: DbSession,
     current_user: CurrentUser,
@@ -126,7 +151,12 @@ async def delete_me(
     await db.flush()
 
 
-@router.get("/me/reviews", response_model=list[ReviewOut])
+@router.get(
+    "/me/reviews",
+    response_model=list[ReviewOut],
+    summary="Мои отзывы",
+    description="Отзывы, полученные текущим пользователем (до 20 последних).",
+)
 async def get_my_reviews(
     db: DbSession,
     current_user: CurrentUser,
@@ -160,7 +190,11 @@ async def get_my_reviews(
     ]
 
 
-@router.get("/me/skills")
+@router.get(
+    "/me/skills",
+    summary="Мои навыки",
+    description="Списки предлагаемых и желаемых навыков с названиями из справочника.",
+)
 async def get_my_skills(
     db: DbSession,
     current_user: CurrentUser,

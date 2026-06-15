@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -9,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_session
+from app.api.openapi_responses import AUTH_ERRORS_FULL, PUBLIC_ERRORS
 from app.models.listing import Listing, ListingInterest, ListingInterestStatus, ListingStatus
 from app.models.user import User
 from app.schemas.listing import (
@@ -21,13 +23,20 @@ from app.schemas.listing import (
     listing_to_out,
 )
 
-router = APIRouter(prefix="/listings", tags=["listings"])
+router = APIRouter(prefix="/listings", tags=["listings"], responses=AUTH_ERRORS_FULL)
 
+logger = logging.getLogger("app.database")
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-@router.post("", response_model=ListingOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=ListingOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Создать объявление",
+    description="Публикует новое объявление. Успех — 201 Created.",
+)
 async def create_listing(
     payload: ListingCreate, db: DbSession, current_user: CurrentUser
 ) -> ListingOut:
@@ -43,10 +52,21 @@ async def create_listing(
     current_user.last_active_at = datetime.now(UTC)
     await db.flush()
     await db.refresh(listing)
+    logger.info(
+        "Listing created listing_id=%d author_id=%d title=%r",
+        listing.id,
+        current_user.id,
+        listing.title,
+    )
     return listing_to_out(listing, current_user.full_name)
 
 
-@router.get("/me/incoming-interests", response_model=list[ListingInterestDetailOut])
+@router.get(
+    "/me/incoming-interests",
+    response_model=list[ListingInterestDetailOut],
+    summary="Входящие отклики",
+    description="Отклики на мои объявления со статусом pending.",
+)
 async def get_my_incoming_interests(
     db: DbSession, current_user: CurrentUser
 ) -> list[ListingInterestDetailOut]:
@@ -75,7 +95,12 @@ async def get_my_incoming_interests(
     ]
 
 
-@router.patch("/{listing_id}", response_model=ListingOut)
+@router.patch(
+    "/{listing_id}",
+    response_model=ListingOut,
+    summary="Обновить объявление",
+    description="Редактирование только автором. Не найдено — 404, не автор — 403.",
+)
 async def update_listing(
     listing_id: int,
     payload: ListingUpdate,
@@ -114,7 +139,12 @@ async def update_listing(
     return listing_to_out(listing, current_user.full_name)
 
 
-@router.get("/{listing_id}/interests", response_model=list[ListingInterestDetailOut])
+@router.get(
+    "/{listing_id}/interests",
+    response_model=list[ListingInterestDetailOut],
+    summary="Отклики на объявление",
+    description="Список pending-откликов. Доступно только автору объявления.",
+)
 async def get_listing_interests(
     listing_id: int,
     db: DbSession,
@@ -151,7 +181,13 @@ async def get_listing_interests(
     ]
 
 
-@router.get("", response_model=list[ListingOut])
+@router.get(
+    "",
+    response_model=list[ListingOut],
+    summary="Список объявлений",
+    description="Публичный каталог. Фильтры: status, author_id. JWT не обязателен.",
+    responses=PUBLIC_ERRORS,
+)
 async def get_listings(
     db: DbSession,
     status_filter: Annotated[ListingStatus | None, Query(alias="status")] = ListingStatus.published,
@@ -175,6 +211,8 @@ async def get_listings(
     "/{listing_id}/interests",
     response_model=ListingInterestOut,
     status_code=status.HTTP_201_CREATED,
+    summary="Откликнуться на объявление",
+    description="Создаёт отклик. Успех — 201. Свой listing — 400, дубликат — 409.",
 )
 async def create_listing_interest(
     listing_id: int,

@@ -1,12 +1,15 @@
-.PHONY: help lint format lint-fix audit-deps install-tools
+.PHONY: help install-tools lint format lint-fix security audit-deps backup restore
 
 help:
 	@echo "Targets:"
-	@echo "  make install-tools  — установить dev-зависимости (uv + npm)"
-	@echo "  make lint           — проверка стиля (ruff + eslint + prettier)"
-	@echo "  make format         — автоформатирование (ruff + prettier)"
-	@echo "  make lint-fix       — lint с автоисправлением где возможно"
-	@echo "  make audit-deps     — аудит уязвимостей в Python-зависимостях"
+	@echo "  make install-tools  — dev-зависимости (uv + npm)"
+	@echo "  make lint           — линтеры и формат (ruff, eslint, prettier)"
+	@echo "  make format         — автоформатирование"
+	@echo "  make lint-fix       — lint с автоисправлением"
+	@echo "  make security       — аудит уязвимостей + SAST (pip-audit, bandit, npm audit)"
+	@echo "  make audit-deps     — то же, что make security"
+	@echo "  make backup         — дамп PostgreSQL + архив backend/uploads"
+	@echo "  make restore        — восстановление (RESTORE_SQL=... RESTORE_MEDIA=...)"
 
 install-tools:
 	cd backend && uv sync --dev
@@ -29,5 +32,19 @@ lint-fix:
 	cd frontend && npm run lint:fix
 	cd frontend && npm run format
 
-audit-deps:
-	cd backend && uv run pip-audit
+CACHE_DIR := $(CURDIR)/.cache
+
+security audit-deps:
+	@mkdir -p $(CACHE_DIR)/pip-audit
+	cd backend && uv run pip-audit --cache-dir $(CACHE_DIR)/pip-audit
+	cd backend && uv run bandit -r app -c pyproject.toml
+	cd frontend && npm run audit
+
+backup:
+	chmod +x scripts/backup.sh scripts/restore.sh scripts/backup-lib.sh
+	./scripts/backup.sh
+
+restore:
+	chmod +x scripts/backup.sh scripts/restore.sh scripts/backup-lib.sh
+	@test -n "$(RESTORE_SQL)" || (echo "Укажите RESTORE_SQL=backups/data/db_backup_....sql" && exit 1)
+	./scripts/restore.sh "$(RESTORE_SQL)" $(RESTORE_MEDIA)

@@ -13,8 +13,10 @@ logger = logging.getLogger("app.requests")
 
 NOISY_PATHS = {
     "/health",
+    "/api/v1/health",
     "/metrics",
     "/docs",
+    "/redoc",
     "/openapi.json",
     "/favicon.ico",
 }

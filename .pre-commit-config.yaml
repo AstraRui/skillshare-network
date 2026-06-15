@@ -10,6 +10,14 @@ repos:
       - id: ruff-format
         files: ^backend/
 
+  # ── Python: SAST (bandit) ────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        args: ["-c", "backend/pyproject.toml", "-r", "backend/app"]
+        pass_filenames: false
+
   # ── JS/JSX: eslint + prettier ────────────────────────────────────────────────
   - repo: local
     hooks:

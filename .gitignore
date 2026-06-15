@@ -1,9 +1,17 @@
-# Общие файлы
+# ── Общее ─────────────────────────────────────────────────────────────────────
 .DS_Store
-.env
+Thumbs.db
 *.log
+logs/
+.cache/
 
-# Python / Backend
+# ── Секреты и окружение ───────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+.prod-secrets/
+
+# ── Python / Backend ──────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *.pyo
@@ -19,71 +27,46 @@ var/
 sdist/
 develop-eggs/
 .installed.cfg
-
 /lib/
 /lib64/
-
-
 .venv/
 venv/
 env/
 ENV/
-
-# uv
 .uv/
+backend/.venv/
 
-# Environment variables
-.env
-.env.*
-!.env.example
-
-# Testing
+# ── Тесты и анализ ────────────────────────────────────────────────────────────
 .pytest_cache/
 .coverage
 coverage.xml
 htmlcov/
 .tox/
-
-# Mypy / type checkers
 .mypy_cache/
 .dmypy.json
 .pyright/
-
-# Ruff
 .ruff_cache/
-
-# Alembic
 alembic/versions/*.pyc
 
-# IDE
+# ── IDE ───────────────────────────────────────────────────────────────────────
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Docker
+# ── Docker ────────────────────────────────────────────────────────────────────
 docker-compose.override.yml
-backend/.venv/
 
-# Secrets (production) — никогда не коммитить!
-secrets/*.txt
-secrets/*.key
-secrets/*.pem
-!secrets/README.md
+# ── Бэкапы (только локально, не в Git) ───────────────────────────────────────
+backups/data/
 
-# React / Frontend
+# ── Медиа-вложения пользователей ──────────────────────────────────────────────
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ── Frontend ──────────────────────────────────────────────────────────────────
 node_modules/
-dist/
-build/
+frontend/node_modules/
 .eslintcache
 .prettiercache
-frontend/node_modules/
